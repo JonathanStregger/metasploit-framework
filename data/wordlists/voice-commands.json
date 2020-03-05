@@ -25,7 +25,7 @@
       "Command": "browse *",
       "Category": "general",
       "Fill notes": "website address",
-      "Purpose": "Go directly to website",
+      "Purpose": "go directly to website",
       "Vulnerability": null
     },
     "5": {
@@ -39,7 +39,7 @@
       "Command": "/search *",
       "Category": "information",
       "Fill notes": "keyword(s)",
-      "Purpose": "Google search",
+      "Purpose": "google search",
       "Vulnerability": null
     },
     "7": {
@@ -53,7 +53,7 @@
       "Command": "go to *",
       "Category": "information",
       "Fill notes": "website",
-      "Purpose": "Google search website",
+      "Purpose": "google search website",
       "Vulnerability": null
     },
     "9": {
@@ -235,14 +235,14 @@
       "Command": "search * on youtube",
       "Category": "entertainment",
       "Fill notes": "keyword(s)",
-      "Purpose": "YouTube",
+      "Purpose": "youtube",
       "Vulnerability": null
     },
     "35": {
       "Command": "play * on pandora",
       "Category": "entertainment",
       "Fill notes": "song",
-      "Purpose": "Pandora",
+      "Purpose": "pandora",
       "Vulnerability": null
     },
     "36": {
@@ -396,28 +396,28 @@
       "Command": "send a whatsapp message to @",
       "Category": "messaging",
       "Fill notes": "contact",
-      "Purpose": "Whatsapp",
+      "Purpose": "whatsapp",
       "Vulnerability": null
     },
     "58": {
       "Command": "send a message with viber",
       "Category": "messaging",
       "Fill notes": null,
-      "Purpose": "Viber",
+      "Purpose": "viber",
       "Vulnerability": null
     },
     "59": {
       "Command": "send a telegram message to @",
       "Category": "messaging",
       "Fill notes": "contact",
-      "Purpose": "Telegram",
+      "Purpose": "telegram",
       "Vulnerability": null
     },
     "60": {
       "Command": "send a hangouts message to @",
       "Category": "messaging",
       "Fill notes": "contact",
-      "Purpose": "Google hangouts",
+      "Purpose": "google hangouts",
       "Vulnerability": null
     },
     "61": {
@@ -431,21 +431,21 @@
       "Command": "(post * on facebook)/(post to facebook)",
       "Category": "social media",
       "Fill notes": "message",
-      "Purpose": "FaceBook",
+      "Purpose": "facebook",
       "Vulnerability": null
     },
     "63": {
       "Command": "(post * on twitter)/(post to twitter",
       "Category": "social media",
       "Fill notes": "tweet",
-      "Purpose": "Twitter",
+      "Purpose": "twitter",
       "Vulnerability": null
     },
     "64": {
       "Command": "note to self *",
       "Category": "notes",
       "Fill notes": "note",
-      "Purpose": "Dictate a note",
+      "Purpose": "dictate a note",
       "Vulnerability": null
     },
     "65": {
@@ -459,49 +459,49 @@
       "Command": "make a note with evernote",
       "Category": "notes",
       "Fill notes": null,
-      "Purpose": "Evernote",
+      "Purpose": "evernote",
       "Vulnerability": null
     },
     "67": {
       "Command": "make a note with *",
       "Category": "notes",
       "Fill notes": "name of app",
-      "Purpose": "Wunderlist, Trello, OneNote, Catch, Google Keep",
+      "Purpose": "wunderlist, trello, onenote, catch, google keep",
       "Vulnerability": null
     },
     "68": {
       "Command": "send @ # *",
       "Category": "send money",
       "Fill notes": "contact, amount, currency",
-      "Purpose": "Send money to a contact",
+      "Purpose": "send money to a contact",
       "Vulnerability": null
     },
     "69": {
       "Command": "request # * from @",
       "Category": "send money",
       "Fill notes": "amount, currency, contact",
-      "Purpose": "Request money from a contact",
+      "Purpose": "request money from a contact",
       "Vulnerability": null
     },
     "70": {
       "Command": "request # * from @ for *",
       "Category": "send money",
       "Fill notes": "amount, currency, contact, reason",
-      "Purpose": "Request money from a contact for a reason",
+      "Purpose": "request money from a contact for a reason",
       "Vulnerability": null
     },
     "71": {
       "Command": "set an alarm for :",
       "Category": "alarms",
       "Fill notes": "time",
-      "Purpose": "Alarm at a time",
+      "Purpose": "alarm at a time",
       "Vulnerability": null
     },
     "72": {
       "Command": "set an alarm in :",
       "Category": "alarms",
       "Fill notes": "amount of time",
-      "Purpose": "Alarm relative to now",
+      "Purpose": "alarm relative to now",
       "Vulnerability": null
     },
     "73": {
@@ -589,7 +589,7 @@
       "Vulnerability": null
     },
     "85": {
-      "Command": "when does my * look like on :",
+      "Command": "what does my * look like on :",
       "Category": "calendar",
       "Fill notes": "schedule/calendar, day",
       "Purpose": null,
@@ -683,7 +683,7 @@
       "Command": "take me home/work",
       "Category": "navigation",
       "Fill notes": null,
-      "Purpose": "Home and work are default locations",
+      "Purpose": "home and work are default locations",
       "Vulnerability": null
     },
     "99": {
@@ -928,14 +928,14 @@
       "Command": "metronome",
       "Category": "other",
       "Fill notes": null,
-      "Purpose": "Starts a metronome",
+      "Purpose": "starts a metronome",
       "Vulnerability": null
     },
     "134": {
       "Command": "what is a *",
       "Category": "other",
       "Fill notes": "medical terms",
-      "Purpose": "Gets medical advice",
+      "Purpose": "gets medical advice",
       "Vulnerability": null
     },
     "135": {
@@ -1154,7 +1154,7 @@
       "Command": "tell @ *",
       "Category": "communication",
       "Fill notes": "contact, message",
-      "Purpose": "Texts the message to the contact",
+      "Purpose": "texts the message to the contact",
       "Vulnerability": "yes"
     },
     "6": {
@@ -1168,7 +1168,7 @@
       "Command": "(read my new messages)/(check email)",
       "Category": "communication",
       "Fill notes": null,
-      "Purpose": "Emails read aloud",
+      "Purpose": "emails read aloud",
       "Vulnerability": "yes"
     },
     "8": {
@@ -1182,14 +1182,14 @@
       "Command": "(what's *'s stock price)/(where's the * today)",
       "Category": "stocks",
       "Fill notes": "stock name",
-      "Purpose": "Check stocks",
+      "Purpose": "check stocks",
       "Vulnerability": null
     },
     "10": {
       "Command": "how many * are in a *",
       "Category": "other",
       "Fill notes": "unit type, unit type",
-      "Purpose": "Conversions",
+      "Purpose": "conversions",
       "Vulnerability": null
     },
     "11": {
@@ -1252,14 +1252,14 @@
       "Command": "my * is @",
       "Category": "phone and settings",
       "Fill notes": "relation, contact",
-      "Purpose": "Designate relationships",
+      "Purpose": "designate relationships",
       "Vulnerability": null
     },
     "20": {
       "Command": "@ is my *",
       "Category": "phone and settings",
       "Fill notes": "contact, relation",
-      "Purpose": "Designate relationships",
+      "Purpose": "designate relationships",
       "Vulnerability": null
     },
     "21": {
@@ -1273,7 +1273,7 @@
       "Command": "how much free space do i have",
       "Category": "phone and settings",
       "Fill notes": null,
-      "Purpose": "Mac only",
+      "Purpose": "mac only",
       "Vulnerability": null
     },
     "23": {
@@ -1385,21 +1385,21 @@
       "Command": "show me photos from :/*/&",
       "Category": "search",
       "Fill notes": "date-time-relational/location-relational",
-      "Purpose": "Accesses photos",
+      "Purpose": "accesses photos",
       "Vulnerability": null
     },
     "39": {
       "Command": "show me my selfies",
       "Category": "search",
       "Fill notes": null,
-      "Purpose": "Accesses photos",
+      "Purpose": "accesses photos",
       "Vulnerability": null
     },
     "40": {
       "Command": "what's * saying",
       "Category": "search",
       "Fill notes": "twitter name-handle",
-      "Purpose": "Search twitter",
+      "Purpose": "search twitter",
       "Vulnerability": null
     },
     "41": {
@@ -1420,28 +1420,28 @@
       "Command": "find my note about *",
       "Category": "search",
       "Fill notes": "keyword(s)",
-      "Purpose": "Accesses notes",
+      "Purpose": "accesses notes",
       "Vulnerability": null
     },
     "44": {
       "Command": "find emails about *",
       "Category": "search",
       "Fill notes": "keyword(s)",
-      "Purpose": "Accesses emails",
+      "Purpose": "accesses emails",
       "Vulnerability": null
     },
     "45": {
       "Command": "where is @",
       "Category": "search",
       "Fill notes": "contact",
-      "Purpose": "Find My Friends must be set up",
+      "Purpose": "find my friends must be set up",
       "Vulnerability": null
     },
     "46": {
       "Command": "who is near me",
       "Category": "search",
       "Fill notes": null,
-      "Purpose": "Find My Friends must be set up",
+      "Purpose": "find my friends must be set up",
       "Vulnerability": null
     },
     "47": {
@@ -1469,7 +1469,7 @@
       "Command": "show all * * in my * folder",
       "Category": "search",
       "Fill notes": "app name, file type, folder name",
-      "Purpose": "Mac specific; accesses device storage",
+      "Purpose": "mac specific; accesses device storage",
       "Vulnerability": null
     },
     "51": {
@@ -1483,7 +1483,7 @@
       "Command": "what's traffic like on the way home",
       "Category": "navigation",
       "Fill notes": null,
-      "Purpose": "Disclose home location",
+      "Purpose": "disclose home location",
       "Vulnerability": null
     },
     "53": {
@@ -1574,7 +1574,7 @@
       "Command": "what's playing at &/*",
       "Category": "entertainment",
       "Fill notes": "location/theatre name",
-      "Purpose": "Get movite times/locations",
+      "Purpose": "get movite times/locations",
       "Vulnerability": null
     },
     "66": {
@@ -1595,7 +1595,7 @@
       "Command": "what song is this",
       "Category": "entertainment",
       "Fill notes": null,
-      "Purpose": "Uses Shazam to identify song",
+      "Purpose": "uses shazam to identify song",
       "Vulnerability": null
     },
     "69": {
@@ -1651,14 +1651,14 @@
       "Command": "play some music",
       "Category": "music and apple music",
       "Fill notes": null,
-      "Purpose": "Begin a custom Apple Music radio station",
+      "Purpose": "begin a custom apple music radio station",
       "Vulnerability": null
     },
     "77": {
       "Command": "like this song",
       "Category": "music and apple music",
       "Fill notes": null,
-      "Purpose": "Likes the current song on Apple Music",
+      "Purpose": "likes the current song on apple music",
       "Vulnerability": null
     },
     "78": {
@@ -1686,7 +1686,7 @@
       "Command": "play more like this",
       "Category": "music and apple music",
       "Fill notes": null,
-      "Purpose": "Play similar songs to the current song",
+      "Purpose": "play similar songs to the current song",
       "Vulnerability": null
     },
     "82": {
@@ -1763,7 +1763,7 @@
       "Command": "how do you say * in *",
       "Category": "translation",
       "Fill notes": "word/phrase, language",
-      "Purpose": "French, German, Mandarin, Spanish and Italian",
+      "Purpose": "french, german, mandarin, spanish and italian",
       "Vulnerability": null
     },
     "93": {
@@ -1877,13 +1877,6 @@
       "Fill notes": null,
       "Purpose": null,
       "Vulnerability": null
-    },
-    "": {
-      "Command": null,
-      "Category": null,
-      "Fill notes": null,
-      "Purpose": null,
-      "Vulnerability": null
     }
   },
   "Amazon Alexa": {
@@ -1933,7 +1926,7 @@
       "Command": "louder",
       "Category": "basic",
       "Fill notes": null,
-      "Purpose": "Increase volume",
+      "Purpose": "increase volume",
       "Vulnerability": null
     },
     "8": {
@@ -1947,147 +1940,147 @@
       "Command": "what can you show me",
       "Category": "echo show",
       "Fill notes": null,
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": null
     },
     "10": {
       "Command": "show my caledar",
       "Category": "echo show",
       "Fill notes": null,
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": "yes"
     },
     "11": {
       "Command": "show me pictures of *",
       "Category": "echo show",
       "Fill notes": "keyword(s)",
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": "yes"
     },
     "12": {
       "Command": "show the * camera",
       "Category": "echo show",
       "Fill notes": "room name",
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": "yes"
     },
     "13": {
       "Command": "who me the trailer for *",
       "Category": "echo show",
       "Fill notes": "movie name",
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": null
     },
     "14": {
       "Command": "show me movie showtimes",
       "Category": "echo show",
       "Fill notes": null,
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": null
     },
     "15": {
       "Command": "show me the : forecast",
       "Category": "echo show",
       "Fill notes": "date-time(weekend, next week, etc)",
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": null
     },
     "16": {
       "Command": "show me * videos on youtube",
       "Category": "echo show",
       "Fill notes": "keyword(s)",
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": null
     },
     "17": {
       "Command": "show me a * recipe from *",
       "Category": "echo show",
       "Fill notes": "recipe name/category, site/source",
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": null
     },
     "18": {
       "Command": "show me my timers",
       "Category": "echo show",
       "Fill notes": null,
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": "yes"
     },
     "19": {
       "Command": "open *",
       "Category": "echo show",
       "Fill notes": "visual skill/app",
-      "Purpose": "Visual feedback",
+      "Purpose": "visual feedback",
       "Vulnerability": null
     },
     "20": {
       "Command": "* on fire tv",
       "Category": "fire tv",
       "Fill notes": "play/pause/resume/stop/fast-forward/rewind",
-      "Purpose": "Control Fire TV/Fire TV Sticks",
+      "Purpose": "control fire tv/fire tv sticks",
       "Vulnerability": null
     },
     "21": {
       "Command": "find/(search for)* on fire tv",
       "Category": "fire tv",
       "Fill notes": "keyword(s)",
-      "Purpose": "Control Fire TV/Fire TV Sticks",
+      "Purpose": "control fire tv/fire tv sticks",
       "Vulnerability": null
     },
     "22": {
       "Command": "show me titles with * on fire tv",
       "Category": "fire tv",
       "Fill notes": "actor/actress",
-      "Purpose": "Control Fire TV/Fire TV Sticks",
+      "Purpose": "control fire tv/fire tv sticks",
       "Vulnerability": null
     },
     "23": {
       "Command": "open/launch * on fire tv",
       "Category": "fire tv",
       "Fill notes": "keyword(s)",
-      "Purpose": "Control Fire TV/Fire TV Sticks",
+      "Purpose": "control fire tv/fire tv sticks",
       "Vulnerability": null
     },
     "24": {
       "Command": "return home",
       "Category": "fire tv",
       "Fill notes": null,
-      "Purpose": "Control Fire TV/Fire TV Sticks",
+      "Purpose": "control fire tv/fire tv sticks",
       "Vulnerability": null
     },
     "25": {
       "Command": "turn on/off fire tv",
       "Category": "fire tv",
       "Fill notes": null,
-      "Purpose": "Control Fire TV edition TVs",
+      "Purpose": "control fire tv edition tvs",
       "Vulnerability": null
     },
     "26": {
       "Command": "set the volume to # on fire tv",
       "Category": "fire tv",
       "Fill notes": "number",
-      "Purpose": "Control Fire TV edition TVs",
+      "Purpose": "control fire tv edition tvs",
       "Vulnerability": null
     },
     "27": {
       "Command": "turn up/down the volume on fire tv",
       "Category": "fire tv",
       "Fill notes": null,
-      "Purpose": "Control Fire TV edition TVs",
+      "Purpose": "control fire tv edition tvs",
       "Vulnerability": null
     },
     "28": {
       "Command": "go to * on fire tv",
       "Category": "fire tv",
       "Fill notes": "channel/network",
-      "Purpose": "Control Fire TV edition TVs",
+      "Purpose": "control fire tv edition tvs",
       "Vulnerability": null
     },
     "29": {
       "Command": "switch to * on fire tv",
       "Category": "fire tv",
       "Fill notes": "input",
-      "Purpose": "Control Fire TV edition TVs",
+      "Purpose": "control fire tv edition tvs",
       "Vulnerability": null
     },
     "30": {
@@ -2115,7 +2108,7 @@
       "Command": "play * everywhere",
       "Category": "media controls",
       "Fill notes": null,
-      "Purpose": "Plays indicated music on all connected devices",
+      "Purpose": "plays indicated music on all connected devices",
       "Vulnerability": null
     },
     "34": {
@@ -2234,42 +2227,42 @@
       "Command": "play",
       "Category": "media controls",
       "Fill notes": null,
-      "Purpose": "Music controls",
+      "Purpose": "music controls",
       "Vulnerability": null
     },
     "51": {
       "Command": "next",
       "Category": "media controls",
       "Fill notes": null,
-      "Purpose": "Music controls",
+      "Purpose": "music controls",
       "Vulnerability": null
     },
     "52": {
       "Command": "stop in the *",
       "Category": "media controls",
       "Fill notes": "room name",
-      "Purpose": "Stop music in another room",
+      "Purpose": "stop music in another room",
       "Vulnerability": null
     },
     "53": {
       "Command": "next in the *",
       "Category": "media controls",
       "Fill notes": "room name",
-      "Purpose": "Next song in another room",
+      "Purpose": "next song in another room",
       "Vulnerability": null
     },
     "54": {
       "Command": "restart",
       "Category": "media controls",
       "Fill notes": null,
-      "Purpose": "Restart currently playing song",
+      "Purpose": "restart currently playing song",
       "Vulnerability": null
     },
     "55": {
       "Command": "add this song",
       "Category": "media controls",
       "Fill notes": null,
-      "Purpose": "Add currently playing song to the Prime Music library",
+      "Purpose": "add currently playing song to the prime music library",
       "Vulnerability": null
     },
     "56": {
@@ -2283,21 +2276,21 @@
       "Command": "add this song to my /* playlist",
       "Category": "media controls",
       "Fill notes": "/name of playlist",
-      "Purpose": "Adds song to last accessed or indicated playlist",
+      "Purpose": "adds song to last accessed or indicated playlist",
       "Vulnerability": null
     },
     "58": {
       "Command": "i like this song",
       "Category": "media controls",
       "Fill notes": null,
-      "Purpose": "Like a song on Pandora or iHeartRadio",
+      "Purpose": "like a song on pandora or iheartradio",
       "Vulnerability": null
     },
     "59": {
       "Command": "thumbs down",
       "Category": "media controls",
       "Fill notes": null,
-      "Purpose": "Dislike a song on Pandora or iHeartRadio",
+      "Purpose": "dislike a song on pandora or iheartradio",
       "Vulnerability": null
     },
     "60": {
@@ -2430,7 +2423,7 @@
       "Command": "call @",
       "Category": "calls and messaging",
       "Fill notes": "contact",
-      "Purpose": "Call another Echo user",
+      "Purpose": "call another echo user",
       "Vulnerability": null
     },
     "79": {
@@ -2451,7 +2444,7 @@
       "Command": "(message @)/(send @ a message)",
       "Category": "calls and messaging",
       "Fill notes": "contact",
-      "Purpose": "Message another Echo user",
+      "Purpose": "message another echo user",
       "Vulnerability": null
     },
     "82": {
@@ -2479,28 +2472,28 @@
       "Command": "drop in on the *",
       "Category": "calls and messaging",
       "Fill notes": "room name",
-      "Purpose": "Use Drop In on one of your devices; intercom to another Echo",
+      "Purpose": "use drop in on one of your devices; intercom to another echo",
       "Vulnerability": null
     },
     "86": {
       "Command": "drop in on @",
       "Category": "calls and messaging",
       "Fill notes": "contact",
-      "Purpose": "Use Drop In to another Echo user; intercom to another Echo user. Other user must allow Drop In from you",
+      "Purpose": "use drop in to another echo user; intercom to another echo user. other user must allow drop in from you",
       "Vulnerability": null
     },
     "87": {
       "Command": "turn video off",
       "Category": "calls and messaging",
       "Fill notes": null,
-      "Purpose": "Echo Show only. Turn off video during ongoing call",
+      "Purpose": "echo show only. turn off video during ongoing call",
       "Vulnerability": null
     },
     "88": {
       "Command": "(announce it's *)/(broadcast it's *)/(tell everyone *)",
       "Category": "calls and messaging",
       "Fill notes": "message",
-      "Purpose": "Make announcement",
+      "Purpose": "make announcement",
       "Vulnerability": null
     },
     "89": {
@@ -2521,7 +2514,7 @@
       "Command": "(buy more *)/(reorder *)",
       "Category": "purchasing",
       "Fill notes": "keyword(s)",
-      "Purpose": "Requires previous purchase",
+      "Purpose": "requires previous purchase",
       "Vulnerability": null
     },
     "92": {
@@ -2535,7 +2528,7 @@
       "Command": "order an *",
       "Category": "purchasing",
       "Fill notes": "amazone alexa device name",
-      "Purpose": "Orders an Amazon Alexa device to your primary address",
+      "Purpose": "orders an amazon alexa device to your primary address",
       "Vulnerability": null
     },
     "94": {
@@ -2556,7 +2549,7 @@
       "Command": "buy this *",
       "Category": "purchasing",
       "Fill notes": "song/album",
-      "Purpose": "Must be listening to music",
+      "Purpose": "must be listening to music",
       "Vulnerability": null
     },
     "97": {
@@ -2591,35 +2584,35 @@
       "Command": "(what did i miss)/(read my notifications)/(what are my notifications)",
       "Category": "notifications",
       "Fill notes": null,
-      "Purpose": "Check missed notifications",
+      "Purpose": "check missed notifications",
       "Vulnerability": "yes"
     },
     "102": {
       "Command": "next",
       "Category": "notifications",
       "Fill notes": null,
-      "Purpose": "Next notification. Must be in notifications",
+      "Purpose": "next notification. must be in notifications",
       "Vulnerability": "yes"
     },
     "103": {
       "Command": "previous",
       "Category": "notifications",
       "Fill notes": null,
-      "Purpose": "Previous notification. Must be in notifications",
+      "Purpose": "previous notification. must be in notifications",
       "Vulnerability": "yes"
     },
     "104": {
       "Command": "delete all of my notifications",
       "Category": "notifications",
       "Fill notes": null,
-      "Purpose": "Must be in notifications",
+      "Purpose": "must be in notifications",
       "Vulnerability": "yes"
     },
     "105": {
       "Command": "(add * to my to-do list)(i need to *)",
       "Category": "to-do and shopping list",
       "Fill notes": "message",
-      "Purpose": "Add task to to-do list",
+      "Purpose": "add task to to-do list",
       "Vulnerability": null
     },
     "106": {
@@ -2661,7 +2654,7 @@
       "Command": "(add * to my shopping list)/(i need to buy *)",
       "Category": "to-do and shopping list",
       "Fill notes": "keyword(s)",
-      "Purpose": "Create/add to an item to the shopping list",
+      "Purpose": "create/add to an item to the shopping list",
       "Vulnerability": null
     },
     "112": {
@@ -2682,7 +2675,7 @@
       "Command": "what are my reminders :",
       "Category": "to-do and shopping list",
       "Fill notes": "(relative date)/date",
-      "Purpose": "Retrieve reminders for a date",
+      "Purpose": "retrieve reminders for a date",
       "Vulnerability": "yes"
     },
     "115": {
@@ -2696,21 +2689,21 @@
       "Command": "open *",
       "Category": "to-do and shopping list",
       "Fill notes": "account name",
-      "Purpose": "Check account balance with named account (bank, visa, american express, etc)",
+      "Purpose": "check account balance with named account (bank, visa, american express, etc)",
       "Vulnerability": "yes"
     },
     "117": {
       "Command": "what's my flash briefing",
       "Category": "news and weather",
       "Fill notes": null,
-      "Purpose": "Get Flash Briefing",
+      "Purpose": "get flash briefing",
       "Vulnerability": "yes"
     },
     "118": {
       "Command": "enable today in music",
       "Category": "news and weather",
       "Fill notes": null,
-      "Purpose": "Add music news to Flash Briefing",
+      "Purpose": "add music news to flash briefing",
       "Vulnerability": null
     },
     "119": {
@@ -2864,7 +2857,7 @@
       "Command": "how do you make *",
       "Category": "food and businesses",
       "Fill notes": "keyword(s)",
-      "Purpose": "Get recipe for the food item",
+      "Purpose": "get recipe for the food item",
       "Vulnerability": null
     },
     "141": {
@@ -2892,14 +2885,14 @@
       "Command": "open wine finder",
       "Category": "food and businesses",
       "Fill notes": null,
-      "Purpose": "Matches wine to your meal; Alexa must know what you are eating",
+      "Purpose": "matches wine to your meal; alexa must know what you are eating",
       "Vulnerability": null
     },
     "145": {
       "Command": "how many * are in *",
       "Category": "math",
       "Fill notes": "units, units",
-      "Purpose": "Unit conversion",
+      "Purpose": "unit conversion",
       "Vulnerability": null
     },
     "146": {
@@ -2934,7 +2927,7 @@
       "Command": "roll a # sided dice",
       "Category": "math",
       "Fill notes": "number",
-      "Purpose": "Overflow?",
+      "Purpose": "overflow?",
       "Vulnerability": null
     },
     "151": {
@@ -2969,14 +2962,14 @@
       "Command": "what was the score of  the * game",
       "Category": "sports",
       "Fill notes": "keyword(s)",
-      "Purpose": "Team name",
+      "Purpose": "team name",
       "Vulnerability": null
     },
     "156": {
       "Command": "did the * win",
       "Category": "sports",
       "Fill notes": "keyword(s)",
-      "Purpose": "Team name",
+      "Purpose": "team name",
       "Vulnerability": null
     },
     "157": {
@@ -2997,21 +2990,21 @@
       "Command": "what are the * standings",
       "Category": "sports",
       "Fill notes": "keyword(s)",
-      "Purpose": "League name",
+      "Purpose": "league name",
       "Vulnerability": null
     },
     "160": {
       "Command": "send that to my fire tablet",
       "Category": "voicecast",
       "Fill notes": null,
-      "Purpose": "Send current listing to a fire tablet",
+      "Purpose": "send current listing to a fire tablet",
       "Vulnerability": null
     },
     "161": {
       "Command": "show this on @/*'s fire tablet",
       "Category": "voicecast",
       "Fill notes": "contact/label",
-      "Purpose": "Send current listing to a different profile's fire tablet",
+      "Purpose": "send current listing to a different profile's fire tablet",
       "Vulnerability": null
     },
     "162": {
@@ -3109,77 +3102,77 @@
       "Command": "tell geneva to preheat my oven to # degrees",
       "Category": "smart home",
       "Fill notes": "number",
-      "Purpose": "GE appliance control with Geneva skill",
+      "Purpose": "ge appliance control with geneva skill",
       "Vulnerability": null
     },
     "176": {
       "Command": "ask geneva if my laundry is dry",
       "Category": "smart home",
       "Fill notes": null,
-      "Purpose": "GE appliance control with Geneva skill",
+      "Purpose": "ge appliance control with geneva skill",
       "Vulnerability": null
     },
     "177": {
       "Command": "ask trackr to find my phone",
       "Category": "smart home",
       "Fill notes": null,
-      "Purpose": "TrackR Lost My Phone skill",
+      "Purpose": "trackr lost my phone skill",
       "Vulnerability": null
     },
     "178": {
       "Command": "turn on the tv",
       "Category": "smart home",
       "Fill notes": null,
-      "Purpose": "Harmony hub",
+      "Purpose": "harmony hub",
       "Vulnerability": null
     },
     "179": {
       "Command": "turn on netflix",
       "Category": "smart home",
       "Fill notes": null,
-      "Purpose": "Harmony hub",
+      "Purpose": "harmony hub",
       "Vulnerability": null
     },
     "180": {
       "Command": "run away mode",
       "Category": "smart home",
       "Fill notes": null,
-      "Purpose": "Produces conversations to scare off potential burglars",
+      "Purpose": "produces conversations to scare off potential burglars",
       "Vulnerability": null
     },
     "181": {
       "Command": "i'm leaving",
       "Category": "smart home",
       "Fill notes": null,
-      "Purpose": "Set Alexa Guard to trigger an alert if smoke alarms or breaking glass sis heard",
+      "Purpose": "set alexa guard to trigger an alert if smoke alarms or breaking glass sis heard",
       "Vulnerability": null
     },
     "182": {
       "Command": "pair",
       "Category": "bluetooth",
       "Fill notes": null,
-      "Purpose": "Pair a new bluetooth device",
+      "Purpose": "pair a new bluetooth device",
       "Vulnerability": "yes"
     },
     "183": {
       "Command": "bluetooth",
       "Category": "bluetooth",
       "Fill notes": null,
-      "Purpose": "Pair a new bluetooth device",
+      "Purpose": "pair a new bluetooth device",
       "Vulnerability": "yes"
     },
     "184": {
       "Command": "connect to my *",
       "Category": "bluetooth",
       "Fill notes": "device name",
-      "Purpose": "Connect to a device",
+      "Purpose": "connect to a device",
       "Vulnerability": null
     },
     "185": {
       "Command": "disconnect from my *",
       "Category": "bluetooth",
       "Fill notes": "device name",
-      "Purpose": "Disconnect from a device",
+      "Purpose": "disconnect from a device",
       "Vulnerability": null
     },
     "186": {
@@ -3235,7 +3228,7 @@
       "Command": "open cortana",
       "Category": "skills",
       "Fill notes": null,
-      "Purpose": "Switches from Alexa to a preview of Cortana",
+      "Purpose": "switches from alexa to a preview of cortana",
       "Vulnerability": null
     },
     "194": {
@@ -3249,14 +3242,14 @@
       "Command": "tell me more",
       "Category": "search",
       "Fill notes": null,
-      "Purpose": "continue reading a Wikipedia entry",
+      "Purpose": "continue reading a wikipedia entry",
       "Vulnerability": null
     },
     "196": {
       "Command": "*",
       "Category": "search",
       "Fill notes": "keyword(s)",
-      "Purpose": "Any general question",
+      "Purpose": "any general question",
       "Vulnerability": null
     },
     "197": {
@@ -3277,14 +3270,14 @@
       "Command": "ask opening bell for *",
       "Category": "search",
       "Fill notes": "keyword(s)",
-      "Purpose": "Get stock values",
+      "Purpose": "get stock values",
       "Vulnerability": null
     },
     "200": {
       "Command": "when is *",
       "Category": "holidays",
       "Fill notes": "keyword(s)",
-      "Purpose": "Find out when a holiday is",
+      "Purpose": "find out when a holiday is",
       "Vulnerability": null
     },
     "201": {
@@ -3361,7 +3354,7 @@
       "Command": "read *",
       "Category": "holidays",
       "Fill notes": "keyword(s)",
-      "Purpose": "Alexa reads a book",
+      "Purpose": "alexa reads a book",
       "Vulnerability": null
     },
     "212": {
@@ -3375,7 +3368,7 @@
       "Command": "open my gift",
       "Category": "holidays",
       "Fill notes": null,
-      "Purpose": "Holiday jokes",
+      "Purpose": "holiday jokes",
       "Vulnerability": null
     },
     "214": {
@@ -3549,13 +3542,6 @@
     "238": {
       "Command": "what is your cunning plan",
       "Category": "easter eggs",
-      "Fill notes": null,
-      "Purpose": null,
-      "Vulnerability": null
-    },
-    "": {
-      "Command": null,
-      "Category": null,
       "Fill notes": null,
       "Purpose": null,
       "Vulnerability": null
