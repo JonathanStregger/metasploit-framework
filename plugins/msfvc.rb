@@ -725,9 +725,11 @@ module Msf
     end
 
     def sanitize
-      @cmd = @cmd.sub(/(\/\b[a-zA-Z#\*&@:]*\b)|(\/\(.*\))/,'') while @cmd.include?('/')
+      @cmd = @cmd.sub(/(\/\b[a-zA-Z#\*&@:]*\b)|(\/\(.*\))/, '') while @cmd.include?('/')
+      @cmd = @cmd.sub(/[\(\)]/, '') while @cmd.include?('(') ||@cmd.include?(')')
+      @cmd = @cmd.sub(/^\s+/, '')
     end
-    
+
     def hash
       @assistant + @id.to_s
     end
@@ -791,11 +793,18 @@ module Msf
     def get_vc(assistant, id)
       hash = assistant + id.to_s
       @vc_list.each do |find|
-        return find if find.hash = hash
+        return find if find.hash == hash
       end
       nil
     end
   
+    def speech_safe?
+      @vc_list.each do |vc| 
+        return false if vc.cmd.match(/[#\*&@:]/)
+      end
+      true
+    end
+    
     def save(filename)
       raise ArgumentError.new("Script '#{@script}'' not saved. No commands in script to save.") unless @vc_list.length > 0
       raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
@@ -803,6 +812,7 @@ module Msf
       script_hash = { "Script" => @script, "Assistant" => @assistant}
       cmds = Hash.new
       @vc_list.each do |vc|
+        vc.sanitize
         cmds.store(@vc_list.index(vc) + 1,
           {"Id"           => vc.id,
           "Command"       => vc.cmd,
