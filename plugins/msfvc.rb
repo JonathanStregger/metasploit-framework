@@ -536,7 +536,7 @@ module Msf
       def display_script(script)
         disp_script = get_script(script)
         unless disp_script
-          print_error("'#{script}' cannot be displayed. Script not found.")
+          print_error("#{script} script cannot be displayed. Script not found.")
           return
         end
         print_line("\n#{disp_script.to_s}")
@@ -582,7 +582,7 @@ module Msf
         if modify_script.mod(vc)
           @scripts << modify_script unless get_script(script)
         else
-          print_error("Could not find voice command id #{id} in #{script}. Script not modified.")
+          print_error("Could not find voice command id #{id} in #{script} script. Script not modified.")
         end
       end
       
@@ -598,15 +598,16 @@ module Msf
       def write_script(script, filename = '')
         write = get_script(script)
         unless write
-          print_error("Could not find script #{script}. Script not written to file.")
+          print_error("Could not find #{script} script. Script not written to file.")
         else
           begin
             script_path = write.save(filename)
-            print_status("Script #{script} written to '#{script_path}'.")
+            print_status("#{script} script written to '#{script_path}'.")
+            print_error("WARNING: #{script} script contains commands that are not speech safe.") unless write.speech_safe?
           rescue IOError => e
-            print_error("Script #{script} not written to '#{script_path}'. #{e}")
+            print_error("#{script} script not written to '#{script_path}'. #{e}")
           rescue SystemCallError => e
-            print_error("Script #{script} not written to '#{script_path}'. #{e}")
+            print_error("#{script} script not written to '#{script_path}'. #{e}")
           rescue ArgumentError => e
             print_error(e)
           end
