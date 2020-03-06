@@ -65,14 +65,10 @@ module Msf
           
           assistant = ''
           script = ''
-          display = 0
-          remove = 0
           fill = []
           id = -1
-          modify = 0
-          write = 0
-          load_script = 0
           filename = ''
+          options = ''
           begin
             opts.each do |opt, arg|
               case opt
@@ -84,51 +80,47 @@ module Msf
               when '--script'
                 script = arg
               when '--display'
-                display = 1
+                options << 'd'
               when '--remove'
-                remove = 1
+                optsion << 'r'
               when '--fill'
                 fill << arg
               when '--id'
                 begin
                   id = Integer(arg)
                 rescue ArgumentError
-                  print_error('A integer is required for id.')
-                  return
+                  return print_error('A integer is required for id.')
                 end
               when '--modify'
-                modify = 1
+                options << 'm'
               when '--write'
-                write = 1
+                options << 'w'
                 filename = arg if arg
               when '--load'
-                load_script = 1
-                filename = arg
+                return load_from_file(arg)
               end
             end
           rescue GetoptLong::Error => e
-            print_status("#{e}")
+            return print_status(e)
           end
           
-          return load_from_file(filename) if load_script == 1
-
           return print_error('A script name is required to start or add to a script.') if script == ''
 
-          return display_script(script) if display == 1
-          return write_script(script, filename) if write == 1
+          return display_script(script) if options.include?('d')
+          return write_script(script, filename) if options.include?('w')
 
           return print_error('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant == ''
           return print_error('A positive id is required to add/remove/modify voice commands in scripts.') if id < 1
-          return print_error('Cannot modify and remove.') if remove == 1 && modify == 1
+          return print_error('Cannot modify and remove.') if options.include?('r') && options.include?('m')
 
           begin
             # Reset voice command
-            if modify == 1 && fill == []
+            if options.include?('m') && fill == []
               remove_from_script(script, assistant, id)
               add_to_script(script, assistant, id, fill)
-            elsif remove == 1
+            elsif options.include?('r')
               remove_from_script(script, assistant, id)
-            elsif modify == 1
+            elsif options.include?('m')
               mod_script(script, assistant, id, fill)
             else
               add_to_script(script, assistant, id, fill)
@@ -307,8 +299,10 @@ module Msf
               end
             end
           rescue GetoptLong::Error => e
-            print_status("#{e}")
+            print_error(e)
           end
+
+          return print_error("No options received.") if search == '' && id == -1
 
           if search == '' && id != -1
             cmd = find_by_id(assistant, id)
@@ -730,6 +724,10 @@ module Msf
       "Id: #{id}\nCommand: #{@cmd}\nPurpose: #{purp}\nFill notes: #{@fill}\nVulnerability: #{vuln}"
     end
 
+    def sanitize
+      @cmd = @cmd.sub(/(\/\b[a-zA-Z#\*&@:]*\b)|(\/\(.*\))/,'') while @cmd.include?('/')
+    end
+    
     def hash
       @assistant + @id.to_s
     end
