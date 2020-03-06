@@ -59,7 +59,8 @@ module Msf
             ['--remove', '-r', GetoptLong::NO_ARGUMENT],
             ['--fill', '-f', GetoptLong::REQUIRED_ARGUMENT],
             ['--modify', '-m', GetoptLong::NO_ARGUMENT],
-            ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT]
+            ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT],
+            ['--load', '-l', GetoptLong::REQUIRED_ARGUMENT]
           )
           
           assistant = ''
@@ -70,6 +71,7 @@ module Msf
           id = -1
           modify = 0
           write = 0
+          load_script = 0
           filename = ''
           begin
             opts.each do |opt, arg|
@@ -99,16 +101,18 @@ module Msf
               when '--write'
                 write = 1
                 filename = arg if arg
+              when '--load'
+                load_script = 1
+                filename = arg
               end
             end
           rescue GetoptLong::Error => e
             print_status("#{e}")
           end
           
-          if script == ''
-            print_error('A script name is required to start or add to a script.')
-            return if display == 1 || assistant != ''
-          end
+          return load_from_file(filename) if load_script == 1
+
+          return print_error('A script name is required to start or add to a script.') if script == ''
 
           return display_script(script) if display == 1
           return write_script(script, filename) if write == 1
@@ -130,7 +134,7 @@ module Msf
               add_to_script(script, assistant, id, fill)
             end
           rescue ArgumentError => e
-            print_error(e.message)
+            print_error(e)
           end
           
         ensure
@@ -158,8 +162,9 @@ module Msf
         tbl << ['-r, --remove', 'Remove the indicated voice command from the script', 'vc_script -r -i 4 -a Siri -s example']
         tbl << ['-f, --fill', 'Fill a wildcard slot with the given argument.', 'vc_script -s example -a Siri -i 5 -f Jon -f "this is a test"']
         tbl << ['-m, --modify', 'Modify a voice command in the script. If -f is not present wildcards are reset', 'vc_script -s example -a Siri -i 5 -m']
-        tbl << ['-w, -write', 'Write the script to file. Default name is the script name, but a filename can be specified.', 'vc_script -s example -w script.json']
-        tbl << ['-h, --help', 'Show this help message', 'vc_list --help']
+        tbl << ['-w, --write', 'Write the script to file. Default name is the script name, but a filename can be specified.', 'vc_script -s example -w script.json']
+        tbl << ['-l, --load', 'Load a script from the specified json file in the data/msfvc directory.', 'vc_script -l script.json']
+        tbl << ['-h, --help', 'Show this help message', 'vc_script --help']
         print("\n#{tbl.to_s}\n")
       end
 
@@ -540,7 +545,7 @@ module Msf
           print_error("'#{script}' cannot be displayed. Script not found.")
           return
         end
-        print_line(disp_script.to_s)
+        print_line("\n#{disp_script.to_s}")
       end
 
       def remove_from_script(script, assistant, id)
@@ -605,10 +610,29 @@ module Msf
             script_path = write.save(filename)
             print_status("Script #{script} written to '#{script_path}'.")
           rescue IOError => e
-            print_error("Script #{script} not written to '#{script_path}'. #{e.message}")
+            print_error("Script #{script} not written to '#{script_path}'. #{e}")
           rescue SystemCallError => e
-            print_error("Script #{script} not written to '#{script_path}'. #{e.message}")
+            print_error("Script #{script} not written to '#{script_path}'. #{e}")
+          rescue ArgumentError => e
+            print_error(e)
           end
+        end
+      end
+
+      def load_from_file(filename)
+        load_script = VCScript.new('')
+        begin
+          load_script.read(filename)
+          print_status("Script #{load_script.name} loaded from #{filename}.")
+          @scripts << load_script
+        rescue IOError => e
+          print_error("Script not loaded from '#{filename}'. #{e}")
+        rescue SystemCallError => e
+          print_error("Script not loaded from '#{filename}'. #{e}")
+        rescue ArgumentError => e
+          print_error(e)
+        rescue JSON::ParserError
+          print_error("Script not loaded. '#{filename}' could not be parsed as json. Provided file must be json format.")
         end
       end
     end
@@ -775,7 +799,8 @@ module Msf
     end
   
     def save(filename)
-      return unless @vc_list.length > 0
+      raise ArgumentError.new("Script '#{@script}'' not saved. No commands in script to save.") unless @vc_list.length > 0
+      raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
 
       script_hash = { "Script" => @script, "Assistant" => @assistant}
       cmds = Hash.new
@@ -799,12 +824,38 @@ module Msf
       script_path
     end
 
-    def to_s()
-      all_cmds = "\nScript '#{@script}':\n"
-      @vc_list.each do |vc|
-        all_cmds << "#{@vc_list.index(vc) + 1}: #{vc.cmd}\n"
+    def read(filename)
+      raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
+      script_path = File.join(Msf::Config.data_directory, 'msfvc', filename)
+      script_data = JSON.parse(File.read(script_path))
+      @script = script_data['Script']
+      @assistant = script_data['Assistant']
+      
+      raise ArgumentError.new("Unable to load script. JSON file does not have required fields for a vc script.") if script_data.nil? || @script.nil? || @assistant.nil?
+      
+      script_data['Commands'].each do |cmd|
+        id = cmd[1]['Id']
+        cmd[1].delete('Id')
+        load_cmd = [id, cmd[1]]
+        @vc_list << VoiceCmd.new(@assistant, load_cmd)
       end
-      all_cmds
+    end
+
+    def to_s()
+      tbl = Rex::Text::Table.new(
+          'Indent'        => 4,
+          'Header'        => "Script #{@script} for #{@assistant}",
+          'Columns'       =>
+          [
+            'Index',
+            'Id',
+            'Command'
+          ]
+        )
+      @vc_list.each do |vc|
+        tbl << [ @vc_list.index(vc), vc.id, vc.cmd ]
+      end
+      tbl.to_s
     end
   end
 end
