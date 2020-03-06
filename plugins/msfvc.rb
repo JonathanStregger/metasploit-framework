@@ -244,6 +244,7 @@ module Msf
         )
         tbl << ['-a, --assistant', 'Required. The voice assistant to display.', 'vc_list -a Google']
         tbl << ['-c, --category', 'Add a category to filter displayed voice commands. Repeated for multiple categories. ? to list supported voice assistants', 'vc_list -a Apple -c travel -c navigation']
+        tbl << ['-s, --search', 'Search for commands with some or all of the command text.', 'vc_list -a Google -s "voice mail"']
         tbl << ['-v, --verbose','Display verbose.', 'vc_list -a Siri -v']
         tbl << ['-h, --help', 'Show this help message', 'vc_list --help']
         print("\n#{tbl.to_s}\n")
@@ -384,7 +385,7 @@ module Msf
         str = '    ' << str.capitalize
       end
 
-      def display(provider, category = [], cmds = [[]])
+      def display(provider, category = [], cmds = [])
         tbl = Rex::Text::Table.new(
           'Indent'  => 4,
           'Header'  => "#{provider} Voice Commands",
@@ -395,7 +396,7 @@ module Msf
             'Category'
           ]
         )
-        if cmds != [[]]
+        if cmds != []
           cmds[0].each do |cmd|
             if category == [] ||
               category.include?(cmd.fetch(1)['Category'])
@@ -431,7 +432,7 @@ module Msf
             'Vulnerability'
           ]
         )
-        if cmds != [[]]
+        if cmds != []
           cmds.each do |cmd|
             if category == [] ||
               category.include?(cmd.fetch(1)['Category'])
