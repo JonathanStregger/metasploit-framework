@@ -129,8 +129,8 @@ module Msf
             else
               add_to_script(script, assistant, id, fill)
             end
-          rescue ArgumentError
-            print_error('Unable to access voice command. Check values.')
+          rescue ArgumentError => e
+            print_error(e.message)
           end
           
         ensure
@@ -729,7 +729,7 @@ module Msf
     def add(add_vc)
       @assistant = add_vc.assistant if @assistant == ''
       unless @assistant == add_vc.assistant
-        print_error("Script #{@script} is for #{@assistant} voice commands. Recieved incompatible voice command for #{add_vc.assistant}")
+        raise ArgumentError.new("Script #{@script} is for #{@assistant} voice commands. Recieved incompatible voice command for #{add_vc.assistant}")
       else
         @vc_list << add_vc
       end
@@ -746,9 +746,9 @@ module Msf
     end
   
     def mod(mod_vc)
-      unless @assistant == add_vc.assistant
-        print_error("Script #{@script} is for #{@assistant} voice commands. Recieved incompatible voice command for #{add_vc.assistant}")
-        return
+      raise ArgumentError.new("Script #{@script} has no voice commands to modify.") unless @vc_list.length > 0
+      unless @assistant == mod_vc.assistant
+        raise ArgumentError.new("Script #{@script} is for #{@assistant} voice commands. Recieved incompatible voice command for #{mod_vc.assistant}")
       end
       
       index = -1
