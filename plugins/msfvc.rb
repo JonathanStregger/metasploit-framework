@@ -56,7 +56,7 @@ module Msf
             ['--display', '-d', GetoptLong::NO_ARGUMENT],
             ['--remove', '-r', GetoptLong::NO_ARGUMENT],
             ['--fill', '-f', GetoptLong::REQUIRED_ARGUMENT],
-            ['--modify', '-m', GetoptLong::NO_ARGUMENT],
+            ['--modify', '-m', GetoptLong::OPTIONAL_ARGUMENT],
             ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT],
             ['--load', '-l', GetoptLong::REQUIRED_ARGUMENT],
             ['--sanitize', '-z', GetoptLong::NO_ARGUMENT]
@@ -66,6 +66,7 @@ module Msf
           script = ''
           fill = []
           id = -1
+          mod = -1
           filename = ''
           options = ''
           begin
@@ -96,10 +97,15 @@ module Msf
                 begin
                   id = Integer(arg)
                 rescue ArgumentError
-                  return print_error('A integer is required for id.')
+                  return print_error('An integer is required for id.')
                 end
               when '--modify'
                 options << 'm'
+                begin
+                  mod = Integer(arg) if arg
+                rescue ArgumentError
+                  return print_error('An integer is required for modify index.')
+                end
               when '--write'
                 options << 'w'
                 filename = arg if arg
@@ -119,8 +125,8 @@ module Msf
           return display_script(script) if options.include?('d')
           return write_script(script, filename) if options.include?('w')
 
-          return print_error('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant == ''
-          return print_error('A positive id is required to add/remove/modify voice commands in scripts.') if id < 1
+          return print_error('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant.empty? && mod == -1
+          return print_error('A positive id is required to add/remove/modify voice commands in scripts.') if id < 1 && mod == -1
           return print_error('Cannot modify and remove.') if options.include?('r') && options.include?('m')
 
           begin
@@ -131,7 +137,11 @@ module Msf
             elsif options.include?('r')
               remove_from_script(script, assistant, id)
             elsif options.include?('m')
-              mod_script(script, assistant, id, fill)
+              if mod == -1
+                mod_script(script, assistant, id, fill)
+              else
+                mod_script(script, nil, mod, fill)
+              end
             else
               add_to_script(script, assistant, id, fill)
             end
@@ -163,7 +173,7 @@ module Msf
         tbl << ['-s, --script', 'The label for the script to create/modify.', 'vc_script -s example -i 4 -a Alexa']
         tbl << ['-r, --remove', 'Remove the indicated voice command from the script', 'vc_script -r -i 4 -a Siri -s example']
         tbl << ['-f, --fill', 'Fill a wildcard slot with the given argument.', 'vc_script -s example -a Siri -i 5 -f Jon -f "this is a test"']
-        tbl << ['-m, --modify', 'Modify a voice command in the script. If -f is not present wildcards are reset', 'vc_script -s example -a Siri -i 5 -m']
+        tbl << ['-m, --modify', "Modify a voice command in the script. If -f is not present wildcards are reset. An argument may be given to modify by script index.", 'vc_script -s example -m 2']
         tbl << ['-w, --write', 'Write the script to file. Default name is the script name, but a filename can be specified.', 'vc_script -s example -w script.json']
         tbl << ['-l, --load', 'Load a script from the specified json file in the data/msfvc directory.', 'vc_script -l script.json']
         tbl << ['-z, --sanitize', 'Sanitize all commands in the script.', 'vc_script -s example -z']
@@ -409,14 +419,21 @@ module Msf
       def mod_script(script, assistant, id, fill)
         # Add script to scripts list
         modify_script = get_script(script) || VCScript.new(script)
-        cmd = find_by_id(assistant, id)
-        vc = VoiceCmd.new(assistant, cmd)
-        unless fill == []
+        if assistant.nil?
+          begin
+            vc = modify_script.index(id)
+          rescue IndexError
+            return print_error('Out of bounds script command index received. Unable to modify script')
+          end
+        else
+          cmd = @vc_data.find_by_id(assistant, id)
+          vc = VoiceCmd.new(assistant, cmd)
+        end
+        unless fill.empty?
           begin
             vc.fill(fill)
           rescue ArgumentError
-            print_error(e)
-            return
+            return print_error(e)
           end
         end
         if modify_script.mod(vc)
@@ -578,10 +595,6 @@ module Msf
       @cmd = @cmd.sub(/[\(\)]/, '') while @cmd.include?('(') || @cmd.include?(')')
       @cmd = @cmd.sub(/^\s+/, '')
     end
-
-    def hash
-      @assistant + @id.to_s
-    end
   end
 
   class VCScript
@@ -639,6 +652,10 @@ module Msf
       false
     end
   
+    def index(ind)
+      @vc_list[ind]
+    end
+
     def get_vc(assistant, id)
       hash = assistant + id.to_s
       @vc_list.each do |find|
