@@ -56,7 +56,7 @@ module Msf
             ['--display', '-d', GetoptLong::NO_ARGUMENT],
             ['--remove', '-r', GetoptLong::NO_ARGUMENT],
             ['--fill', '-f', GetoptLong::REQUIRED_ARGUMENT],
-            ['--modify', '-m', GetoptLong::OPTIONAL_ARGUMENT],
+            ['--modify', '-m', GetoptLong::REQUIRED_ARGUMENT],
             ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT],
             ['--load', '-l', GetoptLong::REQUIRED_ARGUMENT],
             ['--sanitize', '-z', GetoptLong::NO_ARGUMENT]
@@ -100,9 +100,8 @@ module Msf
                   return print_error('An integer is required for id.')
                 end
               when '--modify'
-                options << 'm'
                 begin
-                  mod = Integer(arg) if arg
+                  mod = Integer(arg)
                 rescue ArgumentError
                   return print_error('An integer is required for modify index.')
                 end
@@ -136,12 +135,8 @@ module Msf
               add_to_script(script, assistant, id, fill)
             elsif options.include?('r')
               remove_from_script(script, assistant, id)
-            elsif options.include?('m')
-              if mod == -1
-                mod_script(script, assistant, id, fill)
-              else
-                mod_script(script, nil, mod, fill)
-              end
+            elsif mod != -1
+              mod_script(script, mod, fill)
             else
               add_to_script(script, assistant, id, fill)
             end
@@ -173,7 +168,7 @@ module Msf
         tbl << ['-s, --script', 'The label for the script to create/modify.', 'vc_script -s example -i 4 -a Alexa']
         tbl << ['-r, --remove', 'Remove the indicated voice command from the script', 'vc_script -r -i 4 -a Siri -s example']
         tbl << ['-f, --fill', 'Fill a wildcard slot with the given argument.', 'vc_script -s example -a Siri -i 5 -f Jon -f "this is a test"']
-        tbl << ['-m, --modify', "Modify a voice command in the script. If -f is not present wildcards are reset. An argument may be given to modify by script index.", 'vc_script -s example -m 2']
+        tbl << ['-m, --modify', "Modify a voice command in the script given the script index.", 'vc_script -s example -m 2']
         tbl << ['-w, --write', 'Write the script to file. Default name is the script name, but a filename can be specified.', 'vc_script -s example -w script.json']
         tbl << ['-l, --load', 'Load a script from the specified json file in the data/msfvc directory.', 'vc_script -l script.json']
         tbl << ['-z, --sanitize', 'Sanitize all commands in the script.', 'vc_script -s example -z']
@@ -416,31 +411,10 @@ module Msf
         @scripts << add_script unless get_script(script)
       end
 
-      def mod_script(script, assistant, id, fill)
-        # Add script to scripts list
-        modify_script = get_script(script) || VCScript.new(script)
-        if assistant.nil?
-          begin
-            vc = modify_script.index(id)
-          rescue IndexError
-            return print_error('Out of bounds script command index received. Unable to modify script')
-          end
-        else
-          cmd = @vc_data.find_by_id(assistant, id)
-          vc = VoiceCmd.new(assistant, cmd)
-        end
-        unless fill.empty?
-          begin
-            vc.fill(fill)
-          rescue ArgumentError
-            return print_error(e)
-          end
-        end
-        if modify_script.mod(vc)
-          @scripts << modify_script unless get_script(script)
-        else
-          print_error("Could not find voice command id #{id} in #{script} script. Script not modified.")
-        end
+      def mod_script(script, index, fill)
+        return print_error("Could not find #{script} script.") if (modify_script = get_script(script)).nil?
+
+        modify_script.mod(index, fill)
       end
       
       def get_script(script)
@@ -569,13 +543,12 @@ module Msf
       @vuln
     end
 
-    def fill(*args)
-      if args.length > @num_fills
-        raise(ArgumentError, "More arguments provided than wildcards to replace.")
-      end
+    def fill(args)
+      raise(ArgumentError, "More arguments provided than wildcards to replace.") if args.length > @num_fills
+
       args.each do |arg|
         # replace wildcard with argument
-        @cmd = @cmd.sub(/[#\*&@:]/, arg[0])
+        @cmd = @cmd.sub(/[#\*&@:]/, arg)
         @num_fills -= 1
       end
       @cmd
@@ -631,35 +604,21 @@ module Msf
       false
     end
   
-    def mod(mod_vc)
+    def mod(index, fill)
       raise ArgumentError.new("Script #{@script} has no voice commands to modify.") unless @vc_list.length > 0
-      unless @assistant == mod_vc.assistant
-        raise ArgumentError.new("Script #{@script} is for #{@assistant} voice commands. Recieved incompatible voice command for #{mod_vc.assistant}")
-      end
+      raise ArgumentError.new("Index is out of bounds.") if index < 0 || index >= @vc_list.length
       
-      index = -1
-      @vc_list.each do |mod|
-        if mod.hash == mod_vc.hash
-          index = @vc_list.index(mod)
-        end
-      end
-
-      if index != -1
-        @vc_list[index] = mod_vc
-        return true
-      end
-      
-      false
+      @vc_list[index].fill(fill) unless fill.empty?
     end
   
     def index(ind)
+      return nil if ind < 0 || ind > @vc_list.length
       @vc_list[ind]
     end
 
-    def get_vc(assistant, id)
-      hash = assistant + id.to_s
+    def get_vc(id)
       @vc_list.each do |find|
-        return find if find.hash == hash
+        return find if find.id == id
       end
       nil
     end
