@@ -279,7 +279,7 @@ module Msf
           
           assistant = ''
           id = -1
-          search = ''
+          search = []
           begin
             opts.each do |opt, arg|
               case opt
@@ -287,37 +287,25 @@ module Msf
                 usage_vc_details()
                 return
               when '--assistant'
-                return if (assistant = get_assistant(arg)) == ''
+                return if (assistant = @vc_data.get_assistant(arg)) == ''
               when '--search'
-                if id != -1
-                  print_error('Options -s and -i must not be used together.')
-                  return
-                else
-                  search = arg
-                end
+                return print_error('Options -s and -i must not be used together.') if id != -1
+                search << arg
               when '--id'
-                if search != ''
-                  print_error('Options -s and -i must not be used together.')
-                  return
-                else
-                  begin
-                    id = Integer(arg)
-                    if id < 1
-                      print_error('A positive integer is required for the -i option')
-                      return
-                    end
-                  rescue ArgumentError
-                    print_error('An integer is required for -i option.')
-                    return
-                  end
+                return print_error('Options -s and -i must not be used together.') unless search.empty?
+                begin
+                  id = Integer(arg)
+                  return print_error('A positive integer is required for the -i option') if id < 1
+                rescue ArgumentError
+                  return print_error('An integer is required for -i option.')
                 end
               end
             end
           rescue GetoptLong::Error => e
-            print_error(e)
+            return print_error(e)
           end
 
-          return print_error("No options received.") if search == '' && id == -1
+          return print_error("No options received.") if search.empty? && id == -1
 
           if search.empty? && id != -1
             cmd = @vc_data.find_by_id(assistant, id)
@@ -709,7 +697,7 @@ module Msf
           'Category'
         ]
       )
-      unless cmds.empty?
+      unless cmds.nil?
         cmds.each do |cmd|
           if category.empty? || category.include?(cmd[1]['Category'])
             tbl << [cmd[0],
@@ -745,7 +733,7 @@ module Msf
         'Vulnerability'
         ]
       )
-      unless cmds.empty?
+      unless cmds.nil?
         cmds.each do |cmd|
           if category.empty? || category.include?(cmd[1]['Category'])
             tbl << [cmd[0],
@@ -795,7 +783,7 @@ module Msf
     end
     
     def find_by_str(assistant, terms = [])
-      return [] if terms.empty?
+      return nil if terms.empty?
 
       cmds = []
       terms.each do |search|
@@ -821,35 +809,24 @@ module Msf
       if assistant == '?'
         supported = "\nSupported voice assistants\n==========================\n"
         supported_vas = @vc_data.keys
-        supported_vas.each do |va|
-          supported << "    #{va}\n"
-        end
+        supported_vas.each { |va| supported << "    #{va}\n" }
         return supported
       end
 
-      test_case = assistant.downcase
-      test_case = test_case.sub(/^hey /,'')
-      @vc_data.keys.each do |va|
-        if va.downcase.include?(test_case.downcase)
-          return va
-        end
-      end
+      test_case = assistant.downcase.sub(/^hey /,'')
+      @vc_data.keys.each { |va| return va if va.downcase.include?(test_case.downcase) }
       
       raise ArgumentError.new("#{assistant} is not a supported voice assistant.")
     end
 
     private
     def check_search(obj, search)
-      if obj.nil?
-        return false
-      end
+      return false if obj.nil?
       obj.include?(search)
     end
     
     def details_line(str)
-      if str.nil?
-        return '     none'
-      end
+      return '     none' if str.nil?
       '     ' << str.capitalize
     end
   end
