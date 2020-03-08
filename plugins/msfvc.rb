@@ -709,8 +709,7 @@ module Msf
           'Category'
         ]
       )
-      unless cmds.nil?
-        puts(cmds.inspect)
+      unless cmds.empty?
         cmds.each do |cmd|
           if category.empty? || category.include?(cmd[1]['Category'])
             tbl << [cmd[0],
@@ -746,10 +745,9 @@ module Msf
         'Vulnerability'
         ]
       )
-      unless cmds.nil?
+      unless cmds.empty?
         cmds.each do |cmd|
-          if category == [] ||
-            category.include?(cmd[1]['Category'])
+          if category.empty? || category.include?(cmd[1]['Category'])
             tbl << [cmd[0],
                     cmd[1]['Command'],
                     cmd[1]['Category'],
@@ -760,7 +758,7 @@ module Msf
         end
       else
         @vc_data[assistant].each do |cmd|
-          if category == [] || category.include?(cmd[1]['Category'])
+          if category.empty? || category.include?(cmd[1]['Category'])
             tbl << [cmd[0],
                     cmd[1]['Command'],
                     cmd[1]['Category'],
@@ -802,30 +800,15 @@ module Msf
       cmds = []
       terms.each do |search|
       search = search.downcase
-        unless assistant.empty?
-          @vc_data[assistant].each do |cmd|
-            if cmd[1]['Command'].include?(search) ||
-              check_search(cmd[1]['Category'], search) ||
-              check_search(cmd[1]['Fill notes'], search) ||
-              check_search(cmd[1]['Purpose'], search) ||
-              check_search(cmd[1]['Vulnerability'], search)
-              cmd << assistant
-              cmds << cmd
-            end
-          end
-        else
-          assistants = @vc_data.keys
-          assistants.each do |assistant|
-            @vc_data[assistant].each do |cmd|
-              if cmd[1]['Command'].include?(search) ||
-                check_search(cmd[1]['Category'], search) ||
-                check_search(cmd[1]['Fill notes'], search) ||
-                check_search(cmd[1]['Purpose'], search) ||
-                check_search(cmd[1]['Vulnerability'], search)
-                cmd << assistant
-                cmds << cmd
-              end
-            end
+        assistant = @vc_data.keys if assistant.empty?
+        @vc_data[assistant].each do |cmd|
+          if cmd[1]['Command'].include?(search) ||
+            check_search(cmd[1]['Category'], search) ||
+            check_search(cmd[1]['Fill notes'], search) ||
+            check_search(cmd[1]['Purpose'], search) ||
+            check_search(cmd[1]['Vulnerability'], search)
+            cmd << assistant
+            cmds << cmd
           end
         end
       end
