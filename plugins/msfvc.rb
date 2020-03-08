@@ -27,9 +27,7 @@ module Msf
       def initialize(driver)
         super
 
-        vc_json_path = File.join(Msf::Config.data_directory, 'wordlists', 'voice-commands.json')
-        @vc_data = JSON.parse(File.read(vc_json_path))
-
+        @vc_data = VCData.new
         @scripts = []
       end
 
@@ -76,7 +74,15 @@ module Msf
                 usage_vc_script()
                 return
               when '--assistant'
-                return if (assistant = get_assistant(arg)) == ''
+                begin
+                  if (assistant = @vc_data.get_assistant(arg)).include?("\n")
+                    print_line(assistant)
+                    return
+                  end
+                rescue ArgumentError => e
+                  print_error(e)
+                  return
+                end
               when '--script'
                 script = arg
               when '--display'
@@ -101,7 +107,7 @@ module Msf
               end
             end
           rescue GetoptLong::Error => e
-            return print_status(e)
+            return print_error(e)
           end
           
           return print_error('A script name is required to start or add to a script.') if script == ''
@@ -191,35 +197,33 @@ module Msf
               when '--search'
                 search << arg.downcase
               when '--assistant'
-                return if (assistant = get_assistant(arg)) == ''
+                begin
+                  if (assistant = @vc_data.get_assistant(arg)).include?("\n")
+                    print_line(assistant)
+                    return
+                  end
+                rescue ArgumentError => e
+                  print_error(e)
+                  return
+                end
               when '--verbose'
                 verbose = 1
               end
             end
           rescue GetoptLong::Error => e
-            print_status("#{e}")
+            return print_error(e)
           end
           
-          if assistant == ''
-            print_error('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants')
-            return
-          end
+          return print_error('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant.empty?
 
-          cmds = []
-          if search != []
-            search.each do |term|
-              cmds << find_by_str(assistant, term)
+          begin
+            if verbose == 1
+              print_line("\n#{@vc_data.to_s_verbose(assistant, categories, search)}")
+            else
+              print_line("\n#{@vc_data.to_s(assistant, categories, search)}")
             end
-            if cmds == [[]]
-              print_error("No match found.")
-              return
-            end
-          end
-
-          if verbose == 1
-            display_verbose(assistant, categories, cmds)
-          else
-            display(assistant, categories, cmds)
+          rescue ArgumentError => e
+            print_error(e)
           end
         ensure
           # Restore environment arguments
@@ -304,11 +308,11 @@ module Msf
 
           return print_error("No options received.") if search == '' && id == -1
 
-          if search == '' && id != -1
-            cmd = find_by_id(assistant, id)
-          elsif search != '' && id == -1
-            cmd = find_by_str(assistant, search)
-            if cmd != []
+          if search.empty? && id != -1
+            cmd = @vc_data.find_by_id(assistant, id)
+          elsif !search.empty? && id == -1
+            cmd = @vc_data.find_by_str(assistant, search)
+            unless cmd.nil?
               if cmd.length > 2
                 print_status("Found #{cmd.length} results.")
               end
@@ -317,10 +321,10 @@ module Msf
             end
           end
 
-          if cmd == []
+          if cmd.nil?
             print_error('No command found')
           else
-            details(assistant, cmd)
+            print_line("\n#{@vc_data.to_s_details(assistant, cmd)}")
           end
         ensure
           # Restore environment arguments
@@ -364,175 +368,6 @@ module Msf
         print_line("\n#{tbl.to_s}\nSee individual commands with -h or --help for details on those commands.\n")
       end
 
-      def details(assistant, cmd)
-        msg = "#{assistant} Voice Command\n"
-        (msg.length - 1).times do
-          msg << '='
-        end
-        msg << "\n\n    Id:\n#{details_line(cmd[0])}\n\n"
-        msg << "    Command:\n#{details_line(cmd[1]['Command'])}\n\n"
-        msg << "    Fill notes:\n#{details_line(cmd[1]['Fill notes'])}\n\n"
-        msg << "    Purpose:\n#{details_line(cmd[1]['Purpose'])}\n\n"
-        msg << "    Vulnerability:\n#{details_line(cmd[1]['Vulnerability'])}\n\n"
-        print_line("\n#{msg}")
-      end
-
-      def details_line(str)
-        if str.nil?
-          return '    none'
-        end
-        str = '    ' << str.capitalize
-      end
-
-      def display(provider, category = [], cmds = [])
-        tbl = Rex::Text::Table.new(
-          'Indent'  => 4,
-          'Header'  => "#{provider} Voice Commands",
-          'Columns' =>
-          [
-            'id',
-            'Command',
-            'Category'
-          ]
-        )
-        if cmds != []
-          cmds[0].each do |cmd|
-            if category == [] ||
-              category.include?(cmd.fetch(1)['Category'])
-              tbl << [cmd.fetch(0),
-                      cmd.fetch(1)['Command'],
-                      cmd.fetch(1)['Category']]
-            end
-          end
-        else
-          @vc_data[provider].each do |cmd|
-            if category == [] ||
-              category.include?(cmd.fetch(1)['Category'])
-              tbl << [cmd.fetch(0),
-              cmd.fetch(1)['Command'],
-              cmd.fetch(1)['Category']]
-            end
-          end
-        end
-        print("\n#{tbl.to_s}\n")
-      end
-
-      def display_verbose(provider, category = [], cmds = [])
-        tbl = Rex::Text::Table.new(
-          'Indent'  => 4,
-          'Header'  => "#{provider} Voice Commands",
-          'Columns' =>
-          [
-            'id',
-            'Command',
-            'Category',
-            'Fill Notes',
-            'Purpose',
-            'Vulnerability'
-          ]
-        )
-        if cmds != []
-          cmds.each do |cmd|
-            if category == [] ||
-              category.include?(cmd.fetch(1)['Category'])
-              tbl << [cmd.fetch(0),
-                      cmd.fetch(1)['Command'],
-                      cmd.fetch(1)['Category'],
-                      cmd.fetch(1)['Fill notes'],
-                      cmd.fetch(1)['Purpose'],
-                      cmd.fetch(1)['Vulnerability']]
-            end
-          end
-        else
-          @vc_data[provider].each do |cmd|
-            if category == [] || category.include?(cmd.fetch(1)['Category'])
-              tbl << [cmd.fetch(0),
-                      cmd.fetch(1)['Command'],
-                      cmd.fetch(1)['Category'],
-                      cmd.fetch(1)['Fill notes'],
-                      cmd.fetch(1)['Purpose'],
-                      cmd.fetch(1)['Vulnerability']]
-            end
-          end
-        end
-        print("\n#{tbl.to_s}\n")
-      end
-
-      def get_assistant(arg)
-        arg = arg.downcase
-        if arg == 'google' || arg == 'hey google' || arg == "google voice assistant"
-          return 'Google voice assistant'
-        elsif arg == 'siri' || arg == 'hey siri' || arg == 'apple'
-          return 'Apple Siri'
-        elsif arg == 'alexa' || arg == 'amazon'
-          return 'Amazon Alexa'
-        elsif arg == '?'
-          print_line("\nSupported voice assistants")
-          print_line("==========================\n")
-          vas = @vc_data.keys
-          vas.each do |va|
-            print_line("    #{va}")
-          end
-          print_line('')
-          return ''
-        else
-          print_error("#{arg} is not a supported voice assistant.")
-          return ''
-        end
-      end
-
-      def find_by_id(assistant, id)
-        if assistant == ''
-          print_error('Assistant must be provided with -a when using -i.')
-          return []
-        end
-        @vc_data[assistant].each do |cmd|
-          if cmd.fetch(0).to_i == id
-            return cmd
-          end
-        end
-        []
-      end
-
-      def find_by_str(assistant, search)
-        search = search.downcase
-        cmds = []
-        if assistant != ''
-          @vc_data[assistant].each do |cmd|
-            if cmd[1]['Command'].include?(search) ||
-               check_search(cmd[1]['Category'], search) ||
-               check_search(cmd[1]['Fill notes'], search) ||
-               check_search(cmd[1]['Purpose'], search) ||
-               check_search(cmd[1]['Vulnerability'], search)
-              cmd << assistant
-              cmds << cmd
-            end
-          end
-        else
-          assistants = @vc_data.keys
-          assistants.each do |assistant|
-            @vc_data[assistant].each do |cmd|
-              if cmd[1]['Command'].include?(search) ||
-                 check_search(cmd[1]['Category'], search) ||
-                 check_search(cmd[1]['Fill notes'], search) ||
-                 check_search(cmd[1]['Purpose'], search) ||
-                 check_search(cmd[1]['Vulnerability'], search)
-                cmd << assistant
-                cmds << cmd
-              end
-            end
-          end
-        end
-        cmds
-      end
-
-      def check_search(obj, search)
-        if obj.nil?
-          return false
-        end
-        obj.include?(search)
-      end
-
       def display_script(script)
         disp_script = get_script(script)
         unless disp_script
@@ -544,7 +379,7 @@ module Msf
 
       def remove_from_script(script, assistant, id)
         return false unless rm_script = get_script(script)
-        cmd = find_by_id(assistant, id)
+        cmd = @vc_data.find_by_id(assistant, id)
         vc = VoiceCmd.new(assistant, cmd)
         rm_script.rm(vc)
       end
@@ -552,7 +387,7 @@ module Msf
       def add_to_script(script, assistant, id, fill)
         # Add script to scripts list
         add_script = get_script(script) || VCScript.new(script)
-        cmd = find_by_id(assistant, id)
+        cmd = @vc_data.find_by_id(assistant, id)
         vc = VoiceCmd.new(assistant, cmd)
         unless fill == []
           begin
@@ -727,7 +562,7 @@ module Msf
 
     def sanitize
       @cmd = @cmd.sub(/(\/\b[a-zA-Z#\*&@:]*\b)|(\/\(.*\))/, '') while @cmd.include?('/')
-      @cmd = @cmd.sub(/[\(\)]/, '') while @cmd.include?('(') ||@cmd.include?(')')
+      @cmd = @cmd.sub(/[\(\)]/, '') while @cmd.include?('(') || @cmd.include?(')')
       @cmd = @cmd.sub(/^\s+/, '')
     end
 
@@ -865,6 +700,187 @@ module Msf
         tbl << [ @vc_list.index(vc), vc.id, vc.cmd ]
       end
       tbl.to_s
+    end
+  end
+  
+  class VCData
+    def initialize(filename = 'voice-commands.json')
+      vc_json_path = File.join(Msf::Config.data_directory, 'wordlists', filename)
+      @vc_data = JSON.parse(File.read(vc_json_path))
+    end
+    
+    def to_s(assistant, category = [], search = [])
+      cmds = find_by_str(assistant, search)
+      
+      tbl = Rex::Text::Table.new(
+        'Indent'  => 4,
+        'Header'  => "#{assistant} Voice Commands",
+        'Columns' =>
+        [
+          'id',
+          'Command',
+          'Category'
+        ]
+      )
+      unless cmds.nil?
+        puts(cmds.inspect)
+        cmds.each do |cmd|
+          if category.empty? || category.include?(cmd[1]['Category'])
+            tbl << [cmd[0],
+                    cmd[1]['Command'],
+                    cmd[1]['Category']]
+          end
+        end
+      else
+        @vc_data[assistant].each do |cmd|
+          if category.empty? || category.include?(cmd[1]['Category'])
+            tbl << [cmd[0],
+                    cmd[1]['Command'],
+                    cmd[1]['Category']]
+          end
+        end
+      end
+      tbl.to_s
+    end
+
+    def to_s_verbose(assistant, category = [], search = [])
+      cmds = find_by_str(assistant, search)
+
+      tbl = Rex::Text::Table.new(
+        'Indent'  => 4,
+        'Header'  => "#{assistant} Voice Commands",
+        'Columns' =>
+        [
+          'id',
+          'Command',
+          'Category',
+        'Fill Notes',
+        'Purpose',
+        'Vulnerability'
+        ]
+      )
+      unless cmds.nil?
+        cmds.each do |cmd|
+          if category == [] ||
+            category.include?(cmd[1]['Category'])
+            tbl << [cmd[0],
+                    cmd[1]['Command'],
+                    cmd[1]['Category'],
+                    cmd[1]['Fill notes'] || 'none',
+                    cmd[1]['Purpose'] || 'none',
+                    cmd[1]['Vulnerability'] || 'none']
+          end
+        end
+      else
+        @vc_data[assistant].each do |cmd|
+          if category == [] || category.include?(cmd[1]['Category'])
+            tbl << [cmd[0],
+                    cmd[1]['Command'],
+                    cmd[1]['Category'],
+                    cmd[1]['Fill notes'] || 'none',
+                    cmd[1]['Purpose'] || 'none',
+                    cmd[1]['Vulnerability'] || 'none']
+          end
+        end
+      end
+      tbl.to_s
+    end
+    
+    def to_s_details(assistant, cmd)
+      msg = "#{assistant} Voice Command\n"
+      (msg.length - 1).times do
+        msg << '='
+      end
+      msg << "\n\n    Id:\n#{details_line(cmd[0])}\n\n"
+      msg << "    Command:\n#{details_line(cmd[1]['Command'])}\n\n"
+      msg << "    Fill notes:\n#{details_line(cmd[1]['Fill notes'])}\n\n"
+      msg << "    Purpose:\n#{details_line(cmd[1]['Purpose'])}\n\n"
+      msg << "    Vulnerability:\n#{details_line(cmd[1]['Vulnerability'])}\n\n"
+    end
+    
+    def find_by_id(assistant, id)
+      raise ArgumentError.new('Cannot find by id. Assistant must be specified to search by id.') if assistant.empty?
+      
+      @vc_data[assistant].each do |cmd|
+        if cmd[0].to_i == id
+          return cmd
+        end
+      end
+      nil
+    end
+    
+    def find_by_str(assistant, terms = [])
+      return [] if terms.empty?
+
+      cmds = []
+      terms.each do |search|
+      search = search.downcase
+        unless assistant.empty?
+          @vc_data[assistant].each do |cmd|
+            if cmd[1]['Command'].include?(search) ||
+              check_search(cmd[1]['Category'], search) ||
+              check_search(cmd[1]['Fill notes'], search) ||
+              check_search(cmd[1]['Purpose'], search) ||
+              check_search(cmd[1]['Vulnerability'], search)
+              cmd << assistant
+              cmds << cmd
+            end
+          end
+        else
+          assistants = @vc_data.keys
+          assistants.each do |assistant|
+            @vc_data[assistant].each do |cmd|
+              if cmd[1]['Command'].include?(search) ||
+                check_search(cmd[1]['Category'], search) ||
+                check_search(cmd[1]['Fill notes'], search) ||
+                check_search(cmd[1]['Purpose'], search) ||
+                check_search(cmd[1]['Vulnerability'], search)
+                cmd << assistant
+                cmds << cmd
+              end
+            end
+          end
+        end
+      end
+
+      return cmds unless cmds.empty?
+      nil
+    end
+    
+    def get_assistant(assistant)
+      if assistant == '?'
+        supported = "\nSupported voice assistants\n==========================\n"
+        supported_vas = @vc_data.keys
+        supported_vas.each do |va|
+          supported << "    #{va}\n"
+        end
+        return supported
+      end
+
+      test_case = assistant.downcase
+      test_case = test_case.sub(/^hey /,'')
+      @vc_data.keys.each do |va|
+        if va.downcase.include?(test_case.downcase)
+          return va
+        end
+      end
+      
+      raise ArgumentError.new("#{assistant} is not a supported voice assistant.")
+    end
+
+    private
+    def check_search(obj, search)
+      if obj.nil?
+        return false
+      end
+      obj.include?(search)
+    end
+    
+    def details_line(str)
+      if str.nil?
+        return '     none'
+      end
+      '     ' << str.capitalize
     end
   end
 end
