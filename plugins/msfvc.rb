@@ -58,7 +58,8 @@ module Msf
             ['--fill', '-f', GetoptLong::REQUIRED_ARGUMENT],
             ['--modify', '-m', GetoptLong::NO_ARGUMENT],
             ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT],
-            ['--load', '-l', GetoptLong::REQUIRED_ARGUMENT]
+            ['--load', '-l', GetoptLong::REQUIRED_ARGUMENT],
+            ['--sanitize', '-z', GetoptLong::NO_ARGUMENT]
           )
           
           assistant = ''
@@ -104,14 +105,17 @@ module Msf
                 filename = arg if arg
               when '--load'
                 return load_from_file(arg)
+              when '--sanitize'
+                options << 'z'
               end
             end
           rescue GetoptLong::Error => e
             return print_error(e)
           end
           
-          return print_error('A script name is required to start or add to a script.') if script == ''
-
+          return print_error('A script name is required to start or modify a script.') if script == ''
+          
+          return sanitize_script(script) if options.include?('z')
           return display_script(script) if options.include?('d')
           return write_script(script, filename) if options.include?('w')
 
@@ -162,6 +166,7 @@ module Msf
         tbl << ['-m, --modify', 'Modify a voice command in the script. If -f is not present wildcards are reset', 'vc_script -s example -a Siri -i 5 -m']
         tbl << ['-w, --write', 'Write the script to file. Default name is the script name, but a filename can be specified.', 'vc_script -s example -w script.json']
         tbl << ['-l, --load', 'Load a script from the specified json file in the data/msfvc directory.', 'vc_script -l script.json']
+        tbl << ['-z, --sanitize', 'Sanitize all commands in the script.', 'vc_script -s example -z']
         tbl << ['-h, --help', 'Show this help message', 'vc_script --help']
         print("\n#{tbl.to_s}\n")
       end
@@ -465,6 +470,14 @@ module Msf
           print_error("Script not loaded. '#{filename}' could not be parsed as json. Provided file must be json format.")
         end
       end
+
+      def sanitize_script(script)
+        dirty_script = get_script(script)
+        return print_error("Could not find #{script} script. Script not sanitized") unless dirty_script
+
+        dirty_script.sanitize
+        print_status("All commands in #{script} script have been sanitized.")
+      end
     end
     
     def name
@@ -642,7 +655,7 @@ module Msf
     end
     
     def save(filename)
-      raise ArgumentError.new("Script '#{@script}'' not saved. No commands in script to save.") unless @vc_list.length > 0
+      raise ArgumentError.new("'#{@script}' script not saved. No commands in script to save.") unless @vc_list.length > 0
       raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
 
       script_hash = { "Script" => @script, "Assistant" => @assistant}
@@ -683,6 +696,10 @@ module Msf
         load_cmd = [id, cmd[1]]
         @vc_list << VoiceCmd.new(@assistant, load_cmd)
       end
+    end
+
+    def sanitize
+      @vc_list.each { |vc| vc.sanitize }
     end
 
     def to_s()
@@ -884,4 +901,3 @@ module Msf
     end
   end
 end
-
