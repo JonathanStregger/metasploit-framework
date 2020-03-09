@@ -120,8 +120,8 @@ module Msf
                 options << 'z'
               end
             end
-          rescue GetoptLong::Error => e
-            return print_error(e)
+          rescue GetoptLong::Error
+            return
           end
           
           return print_error('A script name is required to start or modify a script.') if script.empty?
@@ -132,7 +132,7 @@ module Msf
               remove_from_script(script, index)
             elsif options.include?('m')
               mod_script(script, index, fill)
-            else
+            elsif id != -1
               raise ArgumentError.new('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant.empty?
               raise ArgumentError.new('A positive id is required to add voice commands to scripts.') if id < 1
               
@@ -221,8 +221,8 @@ module Msf
                 verbose = 1
               end
             end
-          rescue GetoptLong::Error => e
-            return print_error(e)
+          rescue GetoptLong::Error
+            return
           end
           
           return print_error('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant.empty?
@@ -301,20 +301,18 @@ module Msf
                 end
               end
             end
-          rescue GetoptLong::Error => e
-            return print_error(e)
+          rescue GetoptLong::Error
+            return
           end
 
-          return print_error("No options received.") if search.empty? && id == -1
+          return print_error("Either search or id option required.") if search.empty? && id == -1
 
           if search.empty? && id != -1
             cmd = @vc_data.find_by_id(assistant, id)
           elsif !search.empty? && id == -1
             cmd = @vc_data.find_by_str(assistant, search)
             unless cmd.nil?
-              if cmd.length > 2
-                print_status("Found #{cmd.length} results.")
-              end
+              print_status("Found #{cmd.length} results.") if cmd.length > 2
               cmd = cmd[0]
               assistant = cmd.pop()
             end
@@ -491,41 +489,15 @@ module Msf
       @id = Integer(cmd[0])
       @cmd = cmd[1]['Command']
       @cat = cmd[1]['Category']
-      @fill = cmd[1]['Fill notes'] || 'none'
+      @fill_notes = cmd[1]['Fill notes'] || 'none'
       @purp = cmd[1]['Purpose'] || 'none'
       @vuln = cmd[1]['Vulnerability'] || 'none'
-      @num_fills = @fill.count(',') + 1
+      @num_fills = @fill_notes.count(',') + 1
       fill(fill_args) unless fill_args.empty?
     end
 
-    def assistant
-      @assistant
-    end
-
-    def id
-      @id
-    end
-
-    def cmd
-      @cmd
-    end
+    attr_reader :assistant, :id, :cmd, :cat, :fill_notes, :purp, :vuln
     
-    def cat
-      @cat
-    end
-
-    def fill_notes
-      @fill
-    end
-
-    def purpose
-      @purp
-    end
-
-    def vuln
-      @vuln
-    end
-
     def fill(args)
       raise(ArgumentError, "More arguments provided than wildcards to replace.") if args.length > @num_fills
 
@@ -537,15 +509,6 @@ module Msf
       @cmd
     end
 
-    def wildcards?
-      return true if @num_fills > 0
-      false
-    end
-
-    def to_s
-      "Id: #{id}\nCommand: #{@cmd}\nPurpose: #{purp}\nFill notes: #{@fill}\nVulnerability: #{vuln}"
-    end
-
     def sanitize
       @cmd = @cmd.sub(/(\/\b[a-zA-Z#\*&@:]*\b)|(\/\(.*\))/, '') while @cmd.include?('/')
       @cmd = @cmd.sub(/[\(\)]/, '') while @cmd.include?('(') || @cmd.include?(')')
@@ -555,42 +518,36 @@ module Msf
 
   class VCScript
     def initialize(script)
-      @script = script
+      @name = script
       @vc_list = []
       @assistant = ''
     end
   
-    def name
-      @script
-    end
-  
-    def assistant
-      @assistant
-    end
+    attr_reader :name, :assistant
 
     def add(add_vc)
-      @assistant = add_vc.assistant if @assistant == ''
+      @assistant = add_vc.assistant if @assistant.empty?
       unless @assistant == add_vc.assistant
-        raise ArgumentError.new("Script #{@script} is for #{@assistant} voice commands. Recieved incompatible voice command for #{add_vc.assistant}")
+        raise ArgumentError.new("Script #{@name} is for #{@assistant} voice commands. Recieved incompatible voice command for #{add_vc.assistant}")
       else
         @vc_list << add_vc
       end
     end
     
     def rm(index)
-      raise ArgumentError.new("Script #{@script} has no voice commands to remove.") unless @vc_list.length > 0
+      raise ArgumentError.new("Script #{@name} has no voice commands to remove.") unless @vc_list.length > 0
       raise ArgumentError.new("Index is out of bounds.") if index < 0 || index >= @vc_list.length
 
       raise ArgumentError.new("Could not delete command at index #{index}.") if (@vc_list.delete_at(index)).nil?
     end
   
     def mod(index, fill)
-      raise ArgumentError.new("Script #{@script} has no voice commands to modify.") unless @vc_list.length > 0
+      raise ArgumentError.new("Script #{@name} has no voice commands to modify.") unless @vc_list.length > 0
       raise ArgumentError.new("Index is out of bounds.") if index < 0 || index >= @vc_list.length
       
       return @vc_list[index].fill(fill) unless fill.empty?
       
-      raise ArgumentError.new("Could not modify command at index #{index}.")
+      raise ArgumentError.new("Could not modify command at index #{index}. No fill option received.")
     end
   
     def index(ind)
@@ -612,11 +569,11 @@ module Msf
       true
     end
     
-    def save(filename)
-      raise ArgumentError.new("'#{@script}' script not saved. No commands in script to save.") unless @vc_list.length > 0
+    def save(filename = '')
+      raise ArgumentError.new("'#{@name}' script not saved. No commands in script to save.") unless @vc_list.length > 0
       raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
 
-      script_hash = { "Script" => @script, "Assistant" => @assistant}
+      script_hash = { "Script" => @name, "Assistant" => @assistant}
       cmds = Hash.new
       @vc_list.each do |vc|
         vc.sanitize
@@ -630,7 +587,7 @@ module Msf
       end
       script_hash.store("Commands", cmds)
 
-      filename = @script.dup if filename == ''
+      filename = @name.dup if filename.empty?
       filename << '.json' unless (filename.include?('.json'))
       script_path = File.join(Msf::Config.data_directory, 'msfvc', filename)
       File.open(script_path, 'w') do |fp|
@@ -641,12 +598,13 @@ module Msf
 
     def read(filename)
       raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
+      
       script_path = File.join(Msf::Config.data_directory, 'msfvc', filename)
       script_data = JSON.parse(File.read(script_path))
-      @script = script_data['Script']
+      @name = script_data['Script']
       @assistant = script_data['Assistant']
       
-      raise ArgumentError.new("Unable to load script. JSON file does not have required fields for a vc script.") if script_data.nil? || @script.nil? || @assistant.nil?
+      raise ArgumentError.new("Unable to load script. JSON file does not have required fields for a vc script.") if script_data.nil? || @name.nil? || @assistant.nil?
       
       script_data['Commands'].each do |cmd|
         id = cmd[1]['Id']
@@ -663,7 +621,7 @@ module Msf
     def to_s()
       tbl = Rex::Text::Table.new(
           'Indent'        => 4,
-          'Header'        => "Script #{@script} for #{@assistant}",
+          'Header'        => "Script #{@name} for #{@assistant}",
           'Columns'       =>
           [
             'Index',
@@ -671,9 +629,7 @@ module Msf
             'Command'
           ]
         )
-      @vc_list.each do |vc|
-        tbl << [ @vc_list.index(vc), vc.id, vc.cmd ]
-      end
+      @vc_list.each { |vc| tbl << [ @vc_list.index(vc), vc.id, vc.cmd ] }
       tbl.to_s
     end
   end
@@ -774,11 +730,7 @@ module Msf
     def find_by_id(assistant, id)
       raise ArgumentError.new('Cannot find by id. Assistant must be specified to search by id.') if assistant.empty?
       
-      @vc_data[assistant].each do |cmd|
-        if cmd[0].to_i == id
-          return cmd
-        end
-      end
+      @vc_data[assistant].each { |cmd| return cmd if cmd[0].to_i == id }
       nil
     end
     
