@@ -1,22 +1,35 @@
-###
-#
 #
 # $Id$
 #
-# This class implements the msfvc plugin interface
-# @author Jonathan Stregger
-#  * *email:* (jon.stregger@gmail.com)
-#
-# $Revision$
-#
-###
 
 require 'json'
 require 'rex/text/table'
 require 'getoptlong'
 
 module Msf
+
+###
+#
+# This plugin provides voice command script management for voice assistants.
+#
+# author Jonathan Stregger
+# email: jon.stregger@gmail.com
+# github: github.com/JonathanStregger
+#
+# This plugin requires Metasploit: https://metasploit.com/download
+# Current source: https://github.com/rapid7/metasploit-framework
+#
+# $Revision$
+#
+###
+
   class Plugin::MsfVC < Msf::Plugin
+    ###
+    #
+    # This class implements a console command dispatcher.
+    # Adds vc_list, vc_details, vc_script, and vc_help to the console.
+    #
+    ###
     class MsfvcCommandDispatcher
       include Msf::Ui::Console::CommandDispatcher
 
@@ -453,14 +466,24 @@ module Msf
       end
     end
     
+    #
+    # The plugin's name.
+    #
     def name
       'msfvc'
     end
     
+    #
+    # A brief description of the MsfVC plugin.
+    #
     def desc
-      'To do'
+      'Provides voice command script management.'
     end
     
+    #
+    # Constructs a new instance of the plugin and registers the command
+    # dispatcher.
+    #
     def initialize(framework, opts)
       super
       
@@ -477,6 +500,9 @@ module Msf
       print_status('')
     end
     
+    #
+    # Deregister the command dispatcher to cleanup after the plugin.
+    #
     def cleanup
       remove_console_dispatcher('MsfVC')
     end
@@ -484,7 +510,7 @@ module Msf
 
   class VoiceCmd
     def initialize(assistant = '', cmd = [], fill_args = [])
-      raise(ArgumentError, 'Assistant and command required for new VoiceCmd.') if (assistant == '' || cmd == [])
+      raise ArgumentError.new('Assistant and command required for new VoiceCmd.') if (assistant.empty? || cmd.empty?)
       @assistant = assistant
       @id = Integer(cmd[0])
       @cmd = cmd[1]['Command']
@@ -556,16 +582,12 @@ module Msf
     end
 
     def get_vc(id)
-      @vc_list.each do |find|
-        return find if find.id == id
-      end
+      @vc_list.each { |find| return find if find.id == id }
       nil
     end
   
     def speech_safe?
-      @vc_list.each do |vc| 
-        return false if vc.cmd.match(/[#\*&@:]/)
-      end
+      @vc_list.each { |vc| return false if vc.cmd.match(/[#\*&@:]/) }
       true
     end
     
