@@ -33,17 +33,27 @@ module Msf
     class MsfvcCommandDispatcher
       include Msf::Ui::Console::CommandDispatcher
 
+      #
+      # The dispatcher's name
+      #
       def name
         'MsfVC'
       end
 
+      #
+      # Initialize the command dispatcher.
+      # Gets the data from voice-commands.json in the data/wordlists directory.
+      #
       def initialize(driver)
         super
 
-        @vc_data = VCData.new
+        @vc_data = VCData.new('voice-commands.json')
         @scripts = []
       end
 
+      #
+      # Returns a hash of the commands supported by the command dispatcher
+      #
       def commands
         {
           'vc_list'     => 'List available voice commands',
