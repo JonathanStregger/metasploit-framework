@@ -5,6 +5,7 @@
 require 'json'
 require 'rex/text/table'
 require 'getoptlong'
+require 'espeak'
 
 module Msf
 
@@ -88,10 +89,10 @@ class Plugin::MsfVC < Msf::Plugin
             when '--script'
               script = arg
             when '--write'
-              if arg
-                filename = arg
-              else
+              if arg.empty?
                 filename = 'default'
+              else
+                filename = arg
               end
             end
           end
@@ -107,10 +108,10 @@ class Plugin::MsfVC < Msf::Plugin
           if filename.empty?
             tts_script.speak
           else
-            filename = script << '.mp3' if filename.eql?('default')
-            filename = filename << '.mp3' unless filename.include?('.mp3')
+            filename = script.dup if filename.eql?('default')
             begin
-              tts_script.to_af(filename)
+              write_path = tts_script.to_af(filename)
+              print_status("#{script} script written as speech to #{write_path}")
             rescue IOError => e
               print_error("Cannot save #{script} script as audio. #{e}")
             end
@@ -644,6 +645,8 @@ class VoiceCmd
 end
 
 class VCScript
+  include ESpeak
+
   def initialize(script)
     @name = script
     @vc_list = []
@@ -757,6 +760,7 @@ class VCScript
   end
 
   def tts_safe?
+    return false if @vc_list.length == 0
     @vc_list.each { |vc| return false unless vc.sanitized? }
     @vc_list.each { |vc| return false unless vc.filled? }
     true
@@ -764,12 +768,23 @@ class VCScript
 
   def speak
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
-    raise NotImplementedError.new('Cannot speak. No tts service attached.')
+    cmd_str = ''
+    @vc_list.each { |vc| cmd_str << vc.cmd }
+    tts_script = ESpeak::Speech.new(cmd_str) unless cmd_str.empty?
+    raise ArgumentError.new("Could not create tts conversion for #{@name} script.") if tts_script.nil?
+    tts_script.speak
   end
   
   def to_af(filename)
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
-    raise NotImplementedError.new('Cannot write tts file. No tts service attached.')
+    filename << '.mp3' unless filename.end_with?('.mp3')
+    tts_path = File.join(Msf::Config.data_directory, 'msfvc', filename)
+    cmd_str = ''
+    @vc_list.each { |vc| cmd_str << vc.cmd }
+    tts_script = ESpeak::Speech.new(cmd_str) unless cmd_str.empty?
+    raise ArgumentError.new("Could not create tts conversion for #{@name} script.") if tts_script.nil?
+    tts_script.save(tts_path)
+    tts_path
   end
 end
 
