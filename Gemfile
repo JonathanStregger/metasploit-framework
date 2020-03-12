@@ -23,6 +23,7 @@ group :development do
   # Metasploit::Aggregator external session proxy
   # disabled during 2.5 transition until aggregator is available
   #gem 'metasploit-aggregator'
+  gem 'tts'
 end
 
 group :development, :test do
