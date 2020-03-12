@@ -59,8 +59,89 @@ class Plugin::MsfVC < Msf::Plugin
         'vc_list'     => 'List available voice commands',
         'vc_details'  => 'Display details for a voice command by id or command text',
         'vc_script'   => 'Create or add to a voice command script.',
+        'vc_tts'      => 'Text-to-speech for a script.',
         'vc_help'     => 'Display msfvc help'
       }
+    end
+
+    def cmd_vc_tts(*args)
+      begin
+        # Store environment arguments when get opt uses the args that will
+        # be temporarily stored in ARGV
+        env_args = ARGV.clone
+        ARGV.clear
+        args.each { |arg| ARGV << arg }
+  
+        opts = GetoptLong.new(
+          ['--help', '-h', GetoptLong::NO_ARGUMENT],
+          ['--script', '-s', GetoptLong::REQUIRED_ARGUMENT],
+          ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT]
+        )
+
+        script = ''
+        filename = ''
+        begin
+          opts.each do |opt, arg|
+            case opt
+            when '--help'
+              return usage_vc_tts
+            when '--script'
+              script = arg
+            when '--write'
+              if arg
+                filename = arg
+              else
+                filename = 'default'
+              end
+            end
+          end
+        rescue GetoptLong::Error
+          return
+        end
+        
+        return print_error('Script name required.') if script.empty?
+
+        tts_script = get_script(script)
+        return print_error("Could not find #{script} script. Cannot perform TTS on script.") unless tts_script
+        begin
+          if filename.empty?
+            tts_script.speak
+          else
+            filename = script << '.mp3' if filename.eql?('default')
+            filename = filename << '.mp3' unless filename.include?('.mp3')
+            begin
+              tts_script.to_af(filename)
+            rescue IOError => e
+              print_error("Cannot save #{script} script as audio. #{e}")
+            end
+          end
+        rescue ArgumentError => e
+          print_error(e)
+        rescue NotImplementedError => e
+          print_error(e)
+        end
+      ensure
+        # Restore environment arguments
+        ARGV.clear
+        env_args.each { |arg| ARGV << arg }
+      end
+    end
+
+    def usage_vc_tts
+      tbl = Rex::Text::Table.new(
+        'Indent'        => 4,
+        'Header'        => 'Text-to-speech Commands help',
+        'Columns'       =>
+        [
+          'Option',
+          'Description',
+          'Example'
+        ]
+      )
+      tbl << ['-s, --script', 'The label for the script to speak.', 'vc_tts -s example']
+      tbl << ['-w, --write', 'Create an mp3 of the tts for the script. Filename optional.', 'vc_tts -s example -w attack1.mp3']
+      tbl << ['-h, --help', 'Show this help message', 'vc_tts --help']
+      print("\n#{tbl.to_s}\n")
     end
 
     def cmd_vc_script(*args)
@@ -96,7 +177,7 @@ class Plugin::MsfVC < Msf::Plugin
           opts.each do |opt, arg|
             case opt
             when '--help'
-              usage_vc_script()
+              usage_vc_script
               return
             when '--assistant'
               begin
@@ -146,6 +227,8 @@ class Plugin::MsfVC < Msf::Plugin
         rescue GetoptLong::Error
           return
         end
+
+        return print_error('No operable options received.') if options.empty? && script.empty? && filename.empty? && assistant.empty? && id == -1
         
         return print_error('A script name is required to start or modify a script.') if script.empty?
         return print_error('Cannot modify and remove.') if options.include?('r') && options.include?('m')
@@ -175,7 +258,7 @@ class Plugin::MsfVC < Msf::Plugin
       end
     end
 
-    def usage_vc_script()
+    def usage_vc_script
       tbl = Rex::Text::Table.new(
         'Indent'        => 4,
         'Header'        => 'Script Voice Commands help',
@@ -224,7 +307,7 @@ class Plugin::MsfVC < Msf::Plugin
           opts.each do |opt, arg|
             case opt
             when '--help'
-              usage_vc_list()
+              usage_vc_list
               return
             when '--category'
               categories << arg.downcase
@@ -266,7 +349,7 @@ class Plugin::MsfVC < Msf::Plugin
       end
     end
     
-    def usage_vc_list()
+    def usage_vc_list
       tbl = Rex::Text::Table.new(
         'Indent'        => 4,
         'Header'        => 'List Voice Commands help',
@@ -307,7 +390,7 @@ class Plugin::MsfVC < Msf::Plugin
           opts.each do |opt, arg|
             case opt
             when '--help'
-              usage_vc_details()
+              usage_vc_details
               return
             when '--assistant'
               return if (assistant = @vc_data.get_assistant(arg)) == ''
@@ -353,7 +436,7 @@ class Plugin::MsfVC < Msf::Plugin
       end
     end
 
-    def usage_vc_details()
+    def usage_vc_details
       tbl = Rex::Text::Table.new(
         'Indent'        => 4,
         'Header'        => 'Voice Command Details help',
@@ -550,6 +633,14 @@ class VoiceCmd
     @cmd = @cmd.sub(/[\(\)]/, '') while @cmd.include?('(') || @cmd.include?(')')
     @cmd = @cmd.sub(/^\s+/, '')
   end
+
+  def sanitized?
+    return !@cmd.match?(/(\/\b[a-zA-Z#\*&@:]*\b)|(\/\(.*\))|[\(\)]/)
+  end
+
+  def filled?
+    return !@cmd.match?(/[#\*&@:]/)
+  end
 end
 
 class VCScript
@@ -614,7 +705,7 @@ class VCScript
         "Command"       => vc.cmd,
         "Category"      => vc.cat,
         "Fill notes"    => vc.fill_notes,
-        "Purpose"       => vc.purpose,
+        "Purpose"       => vc.purp,
         "Vulnerability" => vc.vuln})
     end
     script_hash.store("Commands", cmds)
@@ -663,6 +754,22 @@ class VCScript
       )
     @vc_list.each { |vc| tbl << [ @vc_list.index(vc), vc.id, vc.cmd ] }
     tbl.to_s
+  end
+
+  def tts_safe?
+    @vc_list.each { |vc| return false unless vc.sanitized? }
+    @vc_list.each { |vc| return false unless vc.filled? }
+    true
+  end
+
+  def speak
+    raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
+    raise NotImplementedError.new('Cannot speak. No tts service attached.')
+  end
+  
+  def to_af(filename)
+    raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
+    raise NotImplementedError.new('Cannot write tts file. No tts service attached.')
   end
 end
 
