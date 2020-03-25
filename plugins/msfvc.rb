@@ -769,7 +769,7 @@ class VCScript
   def speak
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
     cmd_str = ''
-    @vc_list.each { |vc| cmd_str << vc.cmd }
+    @vc_list.each { |vc| cmd_str << vc.cmd.dup << ', ' }
     tts_script = ESpeak::Speech.new(cmd_str) unless cmd_str.empty?
     raise ArgumentError.new("Could not create tts conversion for #{@name} script.") if tts_script.nil?
     tts_script.speak
@@ -780,7 +780,7 @@ class VCScript
     filename << '.mp3' unless filename.end_with?('.mp3')
     tts_path = File.join(Msf::Config.data_directory, 'msfvc', filename)
     cmd_str = ''
-    @vc_list.each { |vc| cmd_str << vc.cmd }
+    @vc_list.each { |vc| cmd_str << vc.cmd.dup << ', ' }
     tts_script = ESpeak::Speech.new(cmd_str) unless cmd_str.empty?
     raise ArgumentError.new("Could not create tts conversion for #{@name} script.") if tts_script.nil?
     tts_script.save(tts_path)
