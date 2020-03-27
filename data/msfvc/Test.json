@@ -1,0 +1,15 @@
+{
+  "Script": "Test",
+  "Assistant": "Google voice assistant",
+  "Activator": "Ok Google",
+  "Commands": {
+    "1": {
+      "Id": 52,
+      "Command": "text Hailey I love you",
+      "Category": "messaging",
+      "Fill notes": "contact, message",
+      "Purpose": "none",
+      "Vulnerability": "none"
+    }
+  }
+}

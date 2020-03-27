@@ -488,7 +488,7 @@ class Plugin::MsfVC < Msf::Plugin
 
     def add_to_script(script, assistant, id, fill)
       # Add script to scripts list
-      add_script = get_script(script) || VCScript.new(script)
+      add_script = get_script(script) || VCScript.new(script, assistant, @vc_data.get_activator(assistant))
       cmd = @vc_data.find_by_id(assistant, id)
       begin
         vc = VoiceCmd.new(assistant, cmd, fill)
@@ -644,13 +644,15 @@ class VoiceCmd
 end
 
 class VCScript
-  def initialize(script)
+  def initialize(script, assistant = '', activator = '')
     @name = script
     @vc_list = []
-    @assistant = ''
+    @assistant = assistant
+    @activator = activator
   end
 
-  attr_reader :name, :assistant
+  attr_reader :name
+  attr_accessor :assistant, :activator
 
   def add(add_vc)
     @assistant = add_vc.assistant if @assistant.empty?
@@ -696,7 +698,7 @@ class VCScript
     raise ArgumentError.new("'#{@name}' script not saved. No commands in script to save.") unless @vc_list.length > 0
     raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
 
-    script_hash = { "Script" => @name, "Assistant" => @assistant}
+    script_hash = {"Script" => @name, "Assistant" => @assistant, "Activator" => @activator }
     cmds = Hash.new
     @vc_list.each do |vc|
       vc.sanitize
@@ -757,6 +759,7 @@ class VCScript
   end
 
   def tts_safe?
+    return false if @vc_list.length == 0
     @vc_list.each { |vc| return false unless vc.sanitized? }
     @vc_list.each { |vc| return false unless vc.filled? }
     true
@@ -764,6 +767,9 @@ class VCScript
 
   def speak
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
+    raise ArgumentError.new("#{name} does not have an activator assigned.") if @activator.empty?
+    cmd_str = "#{@activator}, "
+    @vc_list.each { |vc| cmd_str << vc.cmd.dup << ', ' }
     raise NotImplementedError.new('Cannot speak. No tts service attached.')
   end
   
@@ -801,7 +807,7 @@ class VCData
         end
       end
     else
-      @vc_data[assistant].each do |cmd|
+      @vc_data[assistant]['Commands'].each do |cmd|
         if category.empty? || category.include?(cmd[1]['Category'])
           tbl << [cmd[0],
                   cmd[1]['Command'],
@@ -840,7 +846,7 @@ class VCData
         end
       end
     else
-      @vc_data[assistant].each do |cmd|
+      @vc_data[assistant]['Commands'].each do |cmd|
         if category.empty? || category.include?(cmd[1]['Category'])
           tbl << [cmd[0],
                   cmd[1]['Command'],
@@ -869,7 +875,7 @@ class VCData
   def find_by_id(assistant, id)
     raise ArgumentError.new('Cannot find by id. Assistant must be specified to search by id.') if assistant.empty?
     
-    @vc_data[assistant].each { |cmd| return cmd if cmd[0].to_i == id }
+    @vc_data[assistant]['Commands'].each { |cmd| return cmd if cmd[0].to_i == id }
     nil
   end
   
@@ -880,7 +886,7 @@ class VCData
     terms.each do |search|
     search = search.downcase
       assistant = @vc_data.keys if assistant.empty?
-      @vc_data[assistant].each do |cmd|
+      @vc_data[assistant]['Commands'].each do |cmd|
         if cmd[1]['Command'].include?(search) ||
           check_search(cmd[1]['Category'], search) ||
           check_search(cmd[1]['Fill notes'], search) ||
@@ -904,10 +910,15 @@ class VCData
       return supported
     end
 
-    test_case = assistant.downcase.sub(/^hey /,'')
+    test_case = assistant.downcase.sub(/^hey /,'').sub(/^ok /, '')
     @vc_data.keys.each { |va| return va if va.downcase.include?(test_case.downcase) }
     
     raise ArgumentError.new("#{assistant} is not a supported voice assistant.")
+  end
+
+  def get_activator(assistant)
+    @vc_data.keys.each { |va| return @vc_data[va]['Activator'] if va.downcase.include?(assistant.downcase) }
+    nil
   end
 
   private
