@@ -163,10 +163,12 @@ class Plugin::MsfVC < Msf::Plugin
           ['--modify', '-m', GetoptLong::REQUIRED_ARGUMENT],
           ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT],
           ['--load', '-l', GetoptLong::REQUIRED_ARGUMENT],
-          ['--sanitize', '-z', GetoptLong::NO_ARGUMENT]
+          ['--sanitize', '-z', GetoptLong::NO_ARGUMENT],
+          ['--activator', '-t', GetoptLong::REQUIRED_ARGUMENT]
         )
         
         assistant = ''
+        activator = ''
         script = ''
         fill = []
         id = -1
@@ -222,6 +224,9 @@ class Plugin::MsfVC < Msf::Plugin
               return load_from_file(arg)
             when '--sanitize'
               options << 'z'
+            when '--activator'
+              options << 't'
+              activator = arg
             end
           end
         rescue GetoptLong::Error
@@ -248,6 +253,7 @@ class Plugin::MsfVC < Msf::Plugin
           print_error(e)
         end
         
+        get_script(script).activator = activator unless activator.empty?
         sanitize_script(script) if options.include?('z')
         display_script(script) if options.include?('d')
         write_script(script, filename) if options.include?('w')
