@@ -80,6 +80,7 @@ class Plugin::MsfVC < Msf::Plugin
 
         script = ''
         filename = ''
+        write = nil
         begin
           opts.each do |opt, arg|
             case opt
@@ -91,7 +92,8 @@ class Plugin::MsfVC < Msf::Plugin
               if arg
                 filename = arg
               else
-                filename = 'default'
+                filename = arg unless arg.empty?
+                write = true
               end
             end
           end
@@ -100,19 +102,18 @@ class Plugin::MsfVC < Msf::Plugin
         end
         
         return print_error('Script name required.') if script.empty?
-
+        
+        filename = script.dup if write && filename.empty?
         tts_script = get_script(script)
         return print_error("Could not find #{script} script. Cannot perform TTS on script.") unless tts_script
         begin
-          if filename.empty?
+          if write.nil?
             tts_script.speak
           else
-            filename = script << '.mp3' if filename.eql?('default')
-            filename = filename << '.mp3' unless filename.include?('.mp3')
             begin
               tts_script.to_af(filename)
             rescue IOError => e
-              print_error("Cannot save #{script} script as audio. #{e}")
+              print_error("Could not save #{script} script as audio. #{e}")
             end
           end
         rescue ArgumentError => e
@@ -734,6 +735,7 @@ class VCScript
     script_data = JSON.parse(File.read(script_path))
     @name = script_data['Script']
     @assistant = script_data['Assistant']
+    @activator = script_data['Activator']
     
     raise ArgumentError.new("Unable to load script. JSON file does not have required fields for a vc script.") if script_data.nil? || @name.nil? || @assistant.nil?
     
