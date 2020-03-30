@@ -5,6 +5,7 @@
 require 'json'
 require 'rex/text/table'
 require 'getoptlong'
+require 'tts'
 
 module Msf
 
@@ -104,7 +105,9 @@ class Plugin::MsfVC < Msf::Plugin
         return print_error('Script name required.') if script.empty?
         
         filename = script.dup if write && filename.empty?
-        tts_script = get_script(script)
+        print_status('Contacting Google Translation Service')
+        write_path = tts_script.to_af(filename)
+        print_status("#{script} script written as speech to #{write_path}")
         return print_error("Could not find #{script} script. Cannot perform TTS on script.") unless tts_script
         begin
           if write.nil?
@@ -778,12 +781,20 @@ class VCScript
     raise ArgumentError.new("#{name} does not have an activator assigned.") if @activator.empty?
     cmd_str = "#{@activator}, "
     @vc_list.each { |vc| cmd_str << vc.cmd.dup << ', ' }
-    raise NotImplementedError.new('Cannot speak. No tts service attached.')
+    raise NotImplementedError.new('Cannot speak.')
   end
   
   def to_af(filename)
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
-    raise NotImplementedError.new('Cannot write tts file. No tts service attached.')
+    filename << '.mp3' unless filename.end_with?('.mp3')
+    tts_path = File.join(Msf::Config.data_directory, 'msfvc')
+    Dir.mkdir(tts_path) unless Dir.exists?(tts_path)
+    tts_path = File.join(tts_path, filename)
+    cmd_str = @activator.dup << '. '
+    @vc_list.each { |vc| cmd_str << vc.cmd.dup << '. ' }
+    cmd_str.chomp!('. ')
+    cmd_str.to_file('en', tts_path)
+    tts_path
   end
 end
 
