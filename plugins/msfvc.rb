@@ -45,6 +45,8 @@ class Plugin::MsfVC < Msf::Plugin
     # Initialize the command dispatcher.
     # Gets the data from voice-commands.json in the data/wordlists directory.
     #
+    # @scripts is a list of voice command scripts generated with the plugin.
+    #
     def initialize(driver)
       super
 
@@ -65,6 +67,13 @@ class Plugin::MsfVC < Msf::Plugin
       }
     end
 
+    #
+    # The Text to Speech command.
+    #
+    #   A voice command script, such as one made with the vc_script command,
+    #   can be converted to voice using Google's translation api via the tts
+    #   gem.
+    #
     def cmd_vc_tts(*args)
       begin
         # Store environment arguments when get opt uses the args that will
@@ -73,6 +82,13 @@ class Plugin::MsfVC < Msf::Plugin
         ARGV.clear
         args.each { |arg| ARGV << arg }
   
+        #
+        # Allowed options are:
+        #   Help menu with -h
+        #   Script identifier -s <script name>
+        #   Write to file -w <optional filename>
+        #     If write is not provided, then the script will be spoken
+        #
         opts = GetoptLong.new(
           ['--help', '-h', GetoptLong::NO_ARGUMENT],
           ['--script', '-s', GetoptLong::REQUIRED_ARGUMENT],
@@ -104,17 +120,18 @@ class Plugin::MsfVC < Msf::Plugin
         
         return print_error('Script name required.') if script.empty?
         
+        # Default filename will be the script name if no filename is provided
         filename = script.dup if write && filename.empty?
-        print_status('Contacting Google Translation Service')
-        write_path = tts_script.to_af(filename)
-        print_status("#{script} script written as speech to #{write_path}")
-        return print_error("Could not find #{script} script. Cannot perform TTS on script.") unless tts_script
         begin
+          # Speak the script if the write option wasn't given
           if write.nil?
             tts_script.speak
           else
             begin
-              tts_script.to_af(filename)
+              print_status('Contacting Google Translation Service')
+              write_path = tts_script.to_af(filename)
+              return print_error("Could not find #{script} script. Cannot perform TTS on script.") unless tts_script
+              print_status("#{script} script written as speech to #{write_path}")
             rescue IOError => e
               print_error("Could not save #{script} script as audio. #{e}")
             end
@@ -131,6 +148,9 @@ class Plugin::MsfVC < Msf::Plugin
       end
     end
 
+    #
+    # The help display for the vc_tts command.
+    #
     def usage_vc_tts
       tbl = Rex::Text::Table.new(
         'Indent'        => 4,
