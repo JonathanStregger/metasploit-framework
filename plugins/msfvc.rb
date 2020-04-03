@@ -83,21 +83,19 @@ class Plugin::MsfVC < Msf::Plugin
         args.each { |arg| ARGV << arg }
   
         #
-        # Allowed options are:
+        # Recognized options are:
         #   Help menu with -h
         #   Script identifier -s <script name>
-        #   Write to file -w <optional filename>
-        #     If write is not provided, then the script will be spoken
+        #   Specify filename -f <filename>
         #
         opts = GetoptLong.new(
           ['--help', '-h', GetoptLong::NO_ARGUMENT],
           ['--script', '-s', GetoptLong::REQUIRED_ARGUMENT],
-          ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT]
+          ['--filename', '-f', GetoptLong::OPTIONAL_ARGUMENT]
         )
 
         script = ''
         filename = ''
-        write = nil
         begin
           opts.each do |opt, arg|
             case opt
@@ -106,12 +104,7 @@ class Plugin::MsfVC < Msf::Plugin
             when '--script'
               script = arg
             when '--write'
-              if arg
-                filename = arg
-              else
-                filename = arg unless arg.empty?
-                write = true
-              end
+              filename = arg unless arg.empty?
             end
           end
         rescue GetoptLong::Error
@@ -121,21 +114,15 @@ class Plugin::MsfVC < Msf::Plugin
         return print_error('Script name required.') if script.empty?
         
         # Default filename will be the script name if no filename is provided
-        filename = script.dup if write && filename.empty?
+        filename = script.dup if filename.empty?
+        tts_script = get_script(script)
         begin
-          # Speak the script if the write option wasn't given
-          if write.nil?
-            tts_script.speak
-          else
-            begin
-              print_status('Contacting Google Translation Service')
-              write_path = tts_script.to_af(filename)
-              return print_error("Could not find #{script} script. Cannot perform TTS on script.") unless tts_script
-              print_status("#{script} script written as speech to #{write_path}")
-            rescue IOError => e
-              print_error("Could not save #{script} script as audio. #{e}")
-            end
-          end
+          print_status('Contacting Google Translation Service')
+          write_path = tts_script.to_af(filename)
+          return print_error("Could not find #{script} script. Cannot perform TTS on script.") unless tts_script
+          print_status("#{script} script written as speech to #{write_path}")
+        rescue IOError => e
+          print_error("Could not save #{script} script as audio. #{e}")
         rescue ArgumentError => e
           print_error(e)
         rescue NotImplementedError => e
@@ -162,12 +149,18 @@ class Plugin::MsfVC < Msf::Plugin
           'Example'
         ]
       )
-      tbl << ['-s, --script', 'The label for the script to speak.', 'vc_tts -s example']
-      tbl << ['-w, --write', 'Create an mp3 of the tts for the script. Filename optional.', 'vc_tts -s example -w attack1.mp3']
+      tbl << ['-s, --script', 'The label for the script to convert to speech.', 'vc_tts -s example']
+      tbl << ['-f, --filename', 'Specify the filename for the tts audio file.', 'vc_tts -s example -f attack1.mp3']
       tbl << ['-h, --help', 'Show this help message', 'vc_tts --help']
       print("\n#{tbl.to_s}\n")
     end
 
+    #
+    # The Voice Command Script command.
+    #   Scripts can be created for a voice assistant from the loaded voice
+    #   command data file. These scripts can be saved to file in json format
+    #   or given to the vc_tts command for saving as an mp3 audio file.
+    #
     def cmd_vc_script(*args)
       begin
         # Store environment arguments when get opt uses the args that will
@@ -176,6 +169,22 @@ class Plugin::MsfVC < Msf::Plugin
         ARGV.clear
         args.each { |arg| ARGV << arg }
   
+        #
+        # Recognized options are:
+        #   Help menu with -h
+        #   Assistant for script with -a <identifier>
+        #   Id of command to add to script with -i <number>
+        #   Script identifier with -s <identifier>
+        #   Display the script identified with -d
+        #   Remove a command by its place in the script with -r <number>
+        #   Fill the next wildcard in the current command with -f
+        #     Must be used with either -i for a new command or with -m for
+        #     modifying an existing command.
+        #   Write the script to a json file with -w <optional filename>
+        #   Load a script from a json file with -l <filename>
+        #   Sanitize the script to make it useable by tts with -z
+        #   Set a custom activator word/phrase with -t
+        #
         opts = GetoptLong.new(
           ['--help', '-h', GetoptLong::NO_ARGUMENT],
           ['--assistant', '-a', GetoptLong::REQUIRED_ARGUMENT],
@@ -191,14 +200,13 @@ class Plugin::MsfVC < Msf::Plugin
           ['--activator', '-t', GetoptLong::REQUIRED_ARGUMENT]
         )
         
-        assistant = ''
-        activator = ''
-        script = ''
-        fill = []
-        id = -1
-        index = -1
-        filename = ''
-        options = ''
+        assistant = ''  # Script assistant
+        activator = ''  # Custom activator word/phrase
+        script = ''     # Script identifier
+        fill = []       # List of wildcard fill values
+        index = -1         # Id of script to add or index of script to remove/modify
+        filename = ''   # Filename to write to or load from
+        options = ''    # Selected options
         begin
           opts.each do |opt, arg|
             case opt
@@ -207,10 +215,8 @@ class Plugin::MsfVC < Msf::Plugin
               return
             when '--assistant'
               begin
-                if (assistant = @vc_data.get_assistant(arg)).include?("\n")
-                  print_line(assistant)
-                  return
-                end
+                assistant = @vc_data.get_assistant(arg)
+                options << 'a'
               rescue ArgumentError => e
                 print_error(e)
                 return
@@ -220,24 +226,29 @@ class Plugin::MsfVC < Msf::Plugin
             when '--display'
               options << 'd'
             when '--remove'
-              options << 'r'
+              return print_error('Choose one of add, modify, or remove.') if options.include?('i') || options.include?('m')
               begin
                 index = Integer(arg)
+                options << 'r'
               rescue ArgumentError
                 return print_error('An integer is required for remove index.')
               end
             when '--fill'
               fill << arg
+              options << 'f'
             when '--id'
+              return print_error('Choose one of add, modify, or remove.') if options.include?('m') || options.include?('r')
               begin
-                id = Integer(arg)
+                index = Integer(arg)
+                options << 'i'
               rescue ArgumentError
                 return print_error('An integer is required for id.')
               end
             when '--modify'
-              options << 'm'
+              return print_error('Choose one of add, modify, or remove.') if options.include?('i') || options.include?('r')
               begin
                 index = Integer(arg)
+                options << 'm'
               rescue ArgumentError
                 return print_error('An integer is required for modify index.')
               end
@@ -257,27 +268,28 @@ class Plugin::MsfVC < Msf::Plugin
           return
         end
 
-        return print_error('No operable options received.') if options.empty? && script.empty? && filename.empty? && assistant.empty? && id == -1
-        
+        # Check for operable option conditions
         return print_error('A script name is required to start or modify a script.') if script.empty?
-        return print_error('Cannot modify and remove.') if options.include?('r') && options.include?('m')
+        return print_error('No operable options received.') if options.empty?
         
+        # Process options remove, modify or add
         begin
           if options.include?('r')
             remove_from_script(script, index)
           elsif options.include?('m')
             mod_script(script, index, fill)
-          elsif id != -1
+          elsif options.include?('i')
             raise ArgumentError.new('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant.empty?
-            raise ArgumentError.new('A positive id is required to add voice commands to scripts.') if id < 1
+            raise ArgumentError.new('A positive id is required to add voice commands to scripts.') if index < 1
             
-            add_to_script(script, assistant, id, fill)
+            add_to_script(script, assistant, index, fill)
           end
         rescue ArgumentError => e
           print_error(e)
         end
         
-        get_script(script).activator = activator unless activator.empty?
+        # All other options may be used together
+        get_script(script).activator = activator if options.include?('t')
         sanitize_script(script) if options.include?('z')
         display_script(script) if options.include?('d')
         write_script(script, filename) if options.include?('w')
@@ -288,6 +300,9 @@ class Plugin::MsfVC < Msf::Plugin
       end
     end
 
+    #
+    # The help prompt for the vc_script command.
+    #
     def usage_vc_script
       tbl = Rex::Text::Table.new(
         'Indent'        => 4,
@@ -345,10 +360,7 @@ class Plugin::MsfVC < Msf::Plugin
               search << arg.downcase
             when '--assistant'
               begin
-                if (assistant = @vc_data.get_assistant(arg)).include?("\n")
-                  print_line(assistant)
-                  return
-                end
+                assistant = @vc_data.get_assistant(arg)
               rescue ArgumentError => e
                 print_error(e)
                 return
@@ -423,7 +435,12 @@ class Plugin::MsfVC < Msf::Plugin
               usage_vc_details
               return
             when '--assistant'
-              return if (assistant = @vc_data.get_assistant(arg)) == ''
+              begin
+                assistant = @vc_data.get_assistant(arg)
+              rescue ArgumentError => e
+                print_error(e)
+                return
+              end
             when '--search'
               return print_error('Options -s and -i must not be used together.') if id != -1
               search << arg
@@ -946,7 +963,7 @@ class VCData
       supported = "\nSupported voice assistants\n==========================\n"
       supported_vas = @vc_data.keys
       supported_vas.each { |va| supported << "    #{va}\n" }
-      return supported
+      raise ArgumentError.new(supported)
     end
 
     test_case = assistant.downcase.sub(/^hey /,'').sub(/^ok /, '')
