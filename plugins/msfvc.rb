@@ -204,7 +204,7 @@ class Plugin::MsfVC < Msf::Plugin
         activator = ''  # Custom activator word/phrase
         script = ''     # Script identifier
         fill = []       # List of wildcard fill values
-        index = -1         # Id of script to add or index of script to remove/modify
+        index = -1      # Id of script to add or index of script to remove/modify
         filename = ''   # Filename to write to or load from
         options = ''    # Selected options
         begin
@@ -276,13 +276,16 @@ class Plugin::MsfVC < Msf::Plugin
         begin
           if options.include?('r')
             remove_from_script(script, index)
+            print_status("Command successfully removed from #{script} script at index #{index}.")
           elsif options.include?('m')
             mod_script(script, index, fill)
+            print_status("Command successfully modified in #{script} script at index #{index}.")
           elsif options.include?('i')
             raise ArgumentError.new('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant.empty?
             raise ArgumentError.new('A positive id is required to add voice commands to scripts.') if index < 1
             
             add_to_script(script, assistant, index, fill)
+            print_status("Command successfully added to #{script}.")
           end
         rescue ArgumentError => e
           print_error(e)
