@@ -227,7 +227,7 @@
         "Vulnerability": "unknown"
       },
       "33": {
-        "Command": "show me my pictures from ",
+        "Command": "show me my pictures from &",
         "Category": "entertainment",
         "Fill notes": "location",
         "Purpose": null,
@@ -850,7 +850,7 @@
         "Vulnerability": "unknown"
       },
       "122": {
-        "Command": "set volum to #",
+        "Command": "set volume to #",
         "Category": "controlling a device",
         "Fill notes": "number",
         "Purpose": null,
@@ -1067,7 +1067,7 @@
         "Vulnerability": "unknown"
       },
       "153": {
-        "Command": "what does flight * * land/(take off)",
+        "Command": "when does flight * * land/(take off)",
         "Category": "travel",
         "Fill notes": "airline, flight number",
         "Purpose": null,
@@ -1562,7 +1562,7 @@
         "Vulnerability": "unknown"
       },
       "63": {
-        "Command": "ge me * * rankings",
+        "Command": "get me * * rankings",
         "Category": "entertainment",
         "Fill notes": "category, sport",
         "Purpose": null,
