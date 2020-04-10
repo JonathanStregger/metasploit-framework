@@ -340,6 +340,17 @@ class Plugin::MsfVC < Msf::Plugin
       print("\n#{tbl.to_s}\n")
     end
 
+    #
+    # The Voice Command List command
+    #   Allows the voice commands for a requested voice assistant to be
+    #   displayed. Voice commands may be filtered by category or by search
+    #   terms.
+    #
+    #   Voice commands are listed with only index, id, and command text by
+    #   default. However, all stored data for voice commands can be displayed
+    #   with the -v/--verbose option. This data may also be displayed with the
+    #   vc_details command.
+    #
     def cmd_vc_list(*args)
       begin
         # Store environment arguments when get opt uses the args that will
@@ -348,6 +359,14 @@ class Plugin::MsfVC < Msf::Plugin
         ARGV.clear
         args.each { |arg| ARGV << arg }
   
+        #
+        # Recognized options are:
+        #   Help menu with -h
+        #   Voice assistant to display with -a (required)
+        #   One or more category options may be used with -c
+        #   One or more search options may be used with -s
+        #   Verbose information can be displayed with -v
+        #
         opts = GetoptLong.new(
           ['--help', '-h', GetoptLong::NO_ARGUMENT],
           ['--assistant', '-a', GetoptLong::REQUIRED_ARGUMENT],
@@ -356,10 +375,10 @@ class Plugin::MsfVC < Msf::Plugin
           ['--verbose', '-v', GetoptLong::NO_ARGUMENT]
         )
         
-        categories = []
-        search = []
-        assistant = ''
-        verbose = 0
+        categories = [] # Categories to search
+        search = []     # Search terms
+        assistant = ''  # The voice assistant to display
+        verbose = false # Verbose mode off by default
         begin
           opts.each do |opt, arg|
             case opt
@@ -378,7 +397,7 @@ class Plugin::MsfVC < Msf::Plugin
                 return
               end
             when '--verbose'
-              verbose = 1
+              verbose = true
             end
           end
         rescue GetoptLong::Error
@@ -387,8 +406,9 @@ class Plugin::MsfVC < Msf::Plugin
         
         return print_error('A voice assistant must be specified with the -a or --assistant option or ? to list available voice assistants') if assistant.empty?
 
+        # Display voice commands with selected options
         begin
-          if verbose == 1
+          if verbose
             print_line("\n#{@vc_data.to_s_verbose(assistant, categories, search)}")
           else
             print_line("\n#{@vc_data.to_s(assistant, categories, search)}")
@@ -403,6 +423,9 @@ class Plugin::MsfVC < Msf::Plugin
       end
     end
     
+    #
+    # The help prompt for the vc_list command
+    #
     def usage_vc_list
       tbl = Rex::Text::Table.new(
         'Indent'        => 4,
