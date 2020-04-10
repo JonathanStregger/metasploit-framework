@@ -758,6 +758,11 @@ end
 #
 ###
 class VoiceCmd
+  #
+  # Initialize a new VoiceCmd object.
+  #   An assistant is not required for initialization, but a command is. The
+  #   command must be a hash with the related fields.
+  #
   def initialize(assistant = '', cmd = [], fill_args = [])
     raise ArgumentError.new('Assistant and command required for new VoiceCmd.') if (assistant.empty? || cmd.empty?)
     @assistant = assistant
