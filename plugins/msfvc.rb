@@ -103,7 +103,7 @@ class Plugin::MsfVC < Msf::Plugin
               return usage_vc_tts
             when '--script'
               script = arg
-            when '--write'
+            when '--filename'
               filename = arg unless arg.empty?
             end
           end
@@ -197,7 +197,8 @@ class Plugin::MsfVC < Msf::Plugin
           ['--write', '-w', GetoptLong::OPTIONAL_ARGUMENT],
           ['--load', '-l', GetoptLong::REQUIRED_ARGUMENT],
           ['--sanitize', '-z', GetoptLong::NO_ARGUMENT],
-          ['--activator', '-t', GetoptLong::REQUIRED_ARGUMENT]
+          ['--activator', '-t', GetoptLong::REQUIRED_ARGUMENT],
+          ['--cmd-spacing', '-c', GetoptLong::REQUIRED_ARGUMENT]
         )
         
         assistant = ''  # Script assistant
@@ -206,6 +207,7 @@ class Plugin::MsfVC < Msf::Plugin
         fill = []       # List of wildcard fill values
         index = -1      # Id of script to add or index of script to remove/modify
         filename = ''   # Filename to write to or load from
+        spacing = nil   # Silence spacing between commands
         options = ''    # Selected options
         begin
           opts.each do |opt, arg|
@@ -262,6 +264,9 @@ class Plugin::MsfVC < Msf::Plugin
             when '--activator'
               options << 't'
               activator = arg
+            when '--cmd-spacing'
+              options <<'c'
+              spacing = arg
             end
           end
         rescue GetoptLong::Error
@@ -292,6 +297,7 @@ class Plugin::MsfVC < Msf::Plugin
         end
         
         # All other options may be used together
+        set_silence(script, spacing) if options.include?('c')
         get_script(script).activator = activator if options.include?('t')
         sanitize_script(script) if options.include?('z')
         display_script(script) if options.include?('d')
@@ -322,11 +328,14 @@ class Plugin::MsfVC < Msf::Plugin
       tbl << ['-d, --display', 'Display the script in its current form', 'vc_script -d -s example']
       tbl << ['-s, --script', 'The label for the script to create/modify.', 'vc_script -s example -i 4 -a Alexa']
       tbl << ['-r, --remove', 'Remove a voice command from the script given a script index.', 'vc_script -s example -r 0']
-      tbl << ['-f, --fill', 'Fill a wildcard slot with the given argument.', 'vc_script -s example -a Siri -i 5 -f Jon -f "this is a test"']
+      tbl << ['-f, --fill', 'Fill a wildcard slot with the given argument.', 'vc_script -s example -a Siri -i 5 -f "Jon Doe" -f "this is a test"']
       tbl << ['-m, --modify', "Modify a voice command in the script given the script index.", 'vc_script -s example -m 2']
       tbl << ['-w, --write', 'Write the script to file. Default name is the script name, but a filename can be specified.', 'vc_script -s example -w script.json']
       tbl << ['-l, --load', 'Load a script from the specified json file in the data/msfvc directory.', 'vc_script -l script.json']
-      tbl << ['-z, --sanitize', 'Sanitize all commands in the script.', 'vc_script -s example -z']
+      tbl << ['-z, --sanitize', 'Sanitize all commands in the script.', "vc_script -s example -z\n"]
+      tbl << ['-c, --cmd-spacing','Set the amount of silence between scripts in ms or by string','vc_script -s example -c 1-minute-3-seconds-250-milliseconds']
+      tbl << ['-c, --cmd-spacing','','vc_script -s example -c 1500']
+      tbl << ['Example','vc_script -s Test -i 5 -f "Jon Doe" -f "this is a test" -z -d -w -c 1500', '']
       tbl << ['-h, --help', 'Show this help message', 'vc_script --help']
       print("\n#{tbl.to_s}\n")
     end
@@ -607,6 +616,18 @@ class Plugin::MsfVC < Msf::Plugin
       dirty_script.sanitize
       print_status("All commands in #{script} script have been sanitized.")
     end
+
+    def set_silence(script, spacing)
+      space_script = get_script(script)
+      return print_error("Could not find #{script} script. Script not sanitized") unless space_script
+
+      if space_script.set_spacing(spacing)
+        print_status("Spacing for commands in #{script} have been set to #{spacing}.") if spacing.class == String
+        print_status("Spacing for commands in #{script} have been set to #{spacing} ms.") if spacing.class == Integer
+      else
+        print_error()
+      end
+    end
   end
   
   #
@@ -694,15 +715,28 @@ class VoiceCmd
 end
 
 class VCScript
-  def initialize(script, assistant = '', activator = '')
+  def initialize(script, assistant = '', activator = '', silence = 0)
     @name = script
     @vc_list = []
     @assistant = assistant
     @activator = activator
+    @silence = 0
   end
 
   attr_reader :name
-  attr_accessor :assistant, :activator
+  attr_accessor :assistant, :activator 
+
+  def set_spacing(spacing)
+    @silence = spacing.dup if spacing.class == Integer && spacing > 0
+    # Convert to int if only numbers
+    if spacing.class == String && spacing !~ /\D/
+      @silence = spacing.to_i
+    else
+      @silence = to_ms(spacing)
+    end
+    return true if @silence.class == Integer
+    false
+  end
 
   def add(add_vc)
     @assistant = add_vc.assistant if @assistant.empty?
@@ -819,22 +853,78 @@ class VCScript
   def speak
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
     raise ArgumentError.new("#{name} does not have an activator assigned.") if @activator.empty?
-    cmd_str = "#{@activator}, "
-    @vc_list.each { |vc| cmd_str << vc.cmd.dup << ', ' }
+    # cmd_str = "#{@activator}, "
+    # @vc_list.each { |vc| cmd_str << vc.cmd.dup << ', ' }
     raise NotImplementedError.new('Cannot speak.')
   end
   
   def to_af(filename)
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
+    # Get full path for results audio file 
     filename << '.mp3' unless filename.end_with?('.mp3')
     tts_path = File.join(Msf::Config.data_directory, 'msfvc')
     Dir.mkdir(tts_path) unless Dir.exists?(tts_path)
     tts_path = File.join(tts_path, filename)
+    # Get the audio from the text
     cmd_str = @activator.dup << '. '
-    @vc_list.each { |vc| cmd_str << vc.cmd.dup << '. ' }
-    cmd_str.chomp!('. ')
     cmd_str.to_file('en', tts_path)
+    @vc_list.each do |vc|
+      add_silence(tts_path)
+      cmd_str = vc.cmd.dup << '. '
+      cmd_str.to_file('en', tts_path)
+    end
     tts_path
+  end
+
+  private
+  def to_ms(time_str)
+    time = 0
+    hour = /(?<num>\d+)-hour/.match(time_str)
+    hour = hour[:num].to_i unless hour.nil?
+    time += hour * 3600000 unless hour.nil?
+    min = /(?<num>\d+)-minute/.match(time_str)
+    min = min[:num].to_i unless min.nil?
+    time += min * 60000 unless min.nil?
+    sec = /(?<num>\d+)-second/.match(time_str)
+    sec = sec[:num].to_i unless sec.nil?
+    time += sec * 1000 unless sec.nil?
+    milli = /(?<num>\d+)-millisecond/.match(time_str)
+    milli = milli[:num].to_i unless milli.nil?
+    time += milli unless milli.nil?
+    time
+  end
+  
+  def add_silence(fn)
+    time = to_ms(@silence) if @silence.class == String
+    time = @silence if @silence.class == Integer
+    return if time == 0
+    raise ArgumentError.new('Unable to parse silence request') unless time.class == Integer
+    raise ArgumentError.new('Maximum supported silence is 5 minutes. Cannot process request.') if time > 300000
+    silence_dir = File.join(Msf::Config.data_directory, 'msfvc', 'silence')
+    while (time >= 250)
+      case time
+      when 60000..300000
+        silence_fn = '1-minute-of-silence.mp3'
+        time -= 60000
+      when 15000..59999
+        silence_fn = '15-seconds-of-silence.mp3'
+        time -= 15000
+      when 5000..14999
+        silence_fn = '5-seconds-of-silence.mp3'
+        time -= 5000
+      when 1000..4999
+        silence_fn = '1-second-of-silence.mp3'
+        time -= 1000
+      when 500..999
+        silence_fn = '500-milliseconds-of-silence.mp3'
+        time -= 500
+      when 250..499
+        silence_fn = '250-milliseconds-of-silence.mp3'
+        time -= 250
+      end
+      silence_path = File.join(silence_dir, silence_fn)
+      `cat "#{silence_path}" >> "#{fn}"`
+    end
   end
 end
 
