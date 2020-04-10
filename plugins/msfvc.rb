@@ -647,7 +647,7 @@ class Plugin::MsfVC < Msf::Plugin
       begin
         script_path = write.save(filename)
         print_status("#{script} script written to '#{script_path}'.")
-        print_error("WARNING: #{script} script contains commands that are not speech safe.") unless write.speech_safe?
+        print_error("WARNING: #{script} script contains commands that are not speech safe.") unless write.tts_safe?
       rescue IOError => e
         print_error("#{script} script not written to '#{script_path}'. #{e}")
       rescue SystemCallError => e
@@ -818,6 +818,17 @@ class VoiceCmd
   end
 end
 
+###
+#
+# Handles a voice command script that can be converted to speech, written to,
+# or load from a json format file.
+#   Voice commands should all be from the same assistant to fit the activator.
+#   However, a custom activation phrase may be provided to the script.
+#
+#   A silence gap may be added between voice commands as needed for script
+#   functionality.
+#
+###
 class VCScript
   def initialize(script, assistant = '', activator = '', silence = 0)
     @name = script
@@ -830,6 +841,10 @@ class VCScript
   attr_reader :name
   attr_accessor :assistant, :activator 
 
+  #
+  # Set the silence gap between each command for when the script is converted
+  # to audio format.
+  #
   def set_spacing(spacing)
     @silence = spacing.dup if spacing.class == Integer && spacing > 0
     # Convert to int if only numbers
@@ -842,7 +857,11 @@ class VCScript
     false
   end
 
+  #
+  # Add the given voice command to the end of the script command queue.
+  #
   def add(add_vc)
+    raise ArgumentError.new("Voice command not received. Command not added to #{@name} script.") unless add_vc.class == VoiceCmd
     @assistant = add_vc.assistant if @assistant.empty?
     unless @assistant == add_vc.assistant
       raise ArgumentError.new("Script #{@name} is for #{@assistant} voice commands. Recieved incompatible voice command for #{add_vc.assistant}")
@@ -851,6 +870,9 @@ class VCScript
     end
   end
   
+  #
+  # Remove the voice command at the given index in the command queue.
+  #
   def rm(index)
     raise ArgumentError.new("Script #{@name} has no voice commands to remove.") unless @vc_list.length > 0
     raise ArgumentError.new("Index is out of bounds.") if index < 0 || index >= @vc_list.length
@@ -858,6 +880,9 @@ class VCScript
     raise ArgumentError.new("Could not delete command at index #{index}.") if (@vc_list.delete_at(index)).nil?
   end
 
+  #
+  # Modify the voice command at the given index in the command queue.
+  #
   def mod(index, fill)
     raise ArgumentError.new("Script #{@name} has no voice commands to modify.") unless @vc_list.length > 0
     raise ArgumentError.new("Index is out of bounds.") if index < 0 || index >= @vc_list.length
@@ -867,21 +892,17 @@ class VCScript
     raise ArgumentError.new("Could not modify command at index #{index}. No fill option received.")
   end
 
+  #
+  # Gets the command at the given index in the command queue.
+  #
   def index(ind)
     return nil if ind < 0 || ind > @vc_list.length
     @vc_list[ind]
   end
 
-  def get_vc(id)
-    @vc_list.each { |find| return find if find.id == id }
-    nil
-  end
-
-  def speech_safe?
-    @vc_list.each { |vc| return false if vc.cmd.match(/[#\*&@:]/) }
-    true
-  end
-  
+  #
+  # Writes the script to file in json format.
+  #
   def save(filename = '')
     raise ArgumentError.new("'#{@name}' script not saved. No commands in script to save.") unless @vc_list.length > 0
     raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
@@ -909,6 +930,10 @@ class VCScript
     script_path
   end
 
+  #
+  # Reads a json format file with the given filename in the msfvc data
+  # directory into this script.
+  #
   def read(filename)
     raise ArgumentError.new("Invalid file location. Enter filename only.") if filename.include?('/') || filename.include?('\\')
     
@@ -928,10 +953,16 @@ class VCScript
     end
   end
 
+  #
+  # Sanitizes all commands in the script for speech conversion.s
+  #
   def sanitize
     @vc_list.each { |vc| vc.sanitize }
   end
 
+  #
+  # Converts all script voice commands to human readable form.
+  #
   def to_s()
     tbl = Rex::Text::Table.new(
         'Indent'        => 4,
@@ -947,6 +978,9 @@ class VCScript
     tbl.to_s
   end
 
+  #
+  # Checks if all commands in the script are ready to convert to speech.
+  #
   def tts_safe?
     return false if @vc_list.length == 0
     @vc_list.each { |vc| return false unless vc.sanitized? }
@@ -954,6 +988,10 @@ class VCScript
     true
   end
 
+  #
+  # Speak the script directly instead of writing to file.
+  # Not currently implemented.
+  #
   def speak
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
     raise ArgumentError.new("#{name} does not have an activator assigned.") if @activator.empty?
@@ -962,6 +1000,9 @@ class VCScript
     raise NotImplementedError.new('Cannot speak.')
   end
   
+  #
+  # Convert the script to mp3 audio file format.
+  #
   def to_af(filename)
     raise ArgumentError.new("#{@name} script is not tts safe.") unless self.tts_safe?
     # Get full path for results audio file 
@@ -981,6 +1022,9 @@ class VCScript
   end
 
   private
+  #
+  # Convert the given time string to milliseconds.
+  #
   def to_ms(time_str)
     time = 0
     hour = /(?<num>\d+)-hour/.match(time_str)
@@ -998,6 +1042,9 @@ class VCScript
     time
   end
   
+  #
+  # Add the silence gap to end of the requested mp3 file.
+  #
   def add_silence(fn)
     time = to_ms(@silence) if @silence.class == String
     time = @silence if @silence.class == Integer
