@@ -747,6 +747,16 @@ class Plugin::MsfVC < Msf::Plugin
   end
 end
 
+###
+#
+# Handles a single voice command for the msfvc plugin.
+#   Stores data for the voice command voice assistant, id, command text,
+#   command category, wildcard fill notes, purpose of command, any known
+#   related vulnerabilities, and the number of wildcards left to be filled.
+#
+# VoiceCmds are stored in VCScript objects voice command lists.
+#
+###
 class VoiceCmd
   def initialize(assistant = '', cmd = [], fill_args = [])
     raise ArgumentError.new('Assistant and command required for new VoiceCmd.') if (assistant.empty? || cmd.empty?)
@@ -763,6 +773,10 @@ class VoiceCmd
 
   attr_reader :assistant, :id, :cmd, :cat, :fill_notes, :purp, :vuln
   
+  #
+  # Fills wildcards from the first wildcard to the last. Must be given less or
+  # equal arguments to the number of wildcards left to fill.
+  #
   def fill(args)
     raise(ArgumentError, "More arguments provided than wildcards to replace.") if args.length > @num_fills
 
@@ -774,16 +788,26 @@ class VoiceCmd
     @cmd
   end
 
+  #
+  # Makes the voice command ready for conversion to speech by stripping all
+  # non-letter and optional bracketed sections from the command text.
+  #
   def sanitize
     @cmd = @cmd.sub(/(\/\b[a-zA-Z#\*&@:]*\b)|(\/\(.*\))/, '') while @cmd.include?('/')
     @cmd = @cmd.sub(/[\(\)]/, '') while @cmd.include?('(') || @cmd.include?(')')
     @cmd = @cmd.sub(/^\s+/, '')
   end
 
+  #
+  # Checks to see if the command text is ready for conversion to speech.
+  #
   def sanitized?
     return !@cmd.match?(/(\/\b[a-zA-Z#\*&@:]*\b)|(\/\(.*\))|[\(\)]/)
   end
 
+  #
+  # Checks if all wildcards have been filled.
+  #
   def filled?
     return !@cmd.match?(/[#\*&@:]/)
   end
