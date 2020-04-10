@@ -557,6 +557,10 @@ class Plugin::MsfVC < Msf::Plugin
       print_line("\n#{tbl.to_s}\nNote: -i and -s may not be used together.\n")
     end
 
+    #
+    # The Voice Command Help command
+    #   Displays the commands added by this plugin.
+    #
     def cmd_vc_help(*args)
       tbl = Rex::Text::Table.new(
         'Indent'  => 4,
