@@ -424,7 +424,7 @@ class Plugin::MsfVC < Msf::Plugin
     end
     
     #
-    # The help prompt for the vc_list command
+    # The help prompt for the vc_list command.
     #
     def usage_vc_list
       tbl = Rex::Text::Table.new(
@@ -445,6 +445,16 @@ class Plugin::MsfVC < Msf::Plugin
       print("\n#{tbl.to_s}\n")
     end
     
+    #
+    # The Voice Command Details command
+    #   Displays all available data for a selected or searched for voice
+    #   command. Voice commands may be selected by the voice assistant and by 
+    #   the id or search terms. If search terms are used, only the first match
+    #   will be displayed. The vc_list command should be used to find the id of
+    #   a command which has many matches with search term(s).
+    #
+    #   Note: use of either -i or -s option is required.
+    #
     def cmd_vc_details(*args)
       begin
         # Store environment arguments when get opt uses the args that will
@@ -453,6 +463,13 @@ class Plugin::MsfVC < Msf::Plugin
         ARGV.clear
         args.each { |arg| ARGV << arg }
   
+        #
+        # Recognized options are:
+        #   Help menu with -h
+        #   Voice assistant to display with -a (required)
+        #   The id of the voice command with -i
+        #   Search terms for voice command with -s (multiple accepted)
+        #
         opts = GetoptLong.new(
           ['--help', '-h', GetoptLong::NO_ARGUMENT],
           ['--assistant', '-a', GetoptLong::REQUIRED_ARGUMENT],
@@ -460,9 +477,9 @@ class Plugin::MsfVC < Msf::Plugin
           ['--search', '-s', GetoptLong::REQUIRED_ARGUMENT]
         )
         
-        assistant = ''
-        id = -1
-        search = []
+        assistant = ''  # The voice assistant to display
+        id = -1         # The id of the voice command
+        search = []     # The search term(s)
         begin
           opts.each do |opt, arg|
             case opt
@@ -477,10 +494,10 @@ class Plugin::MsfVC < Msf::Plugin
                 return
               end
             when '--search'
-              return print_error('Options -s and -i must not be used together.') if id != -1
+              return print_error('Options -s and -i may not be used together.') if id != -1
               search << arg
             when '--id'
-              return print_error('Options -s and -i must not be used together.') unless search.empty?
+              return print_error('Options -s and -i may not be used together.') unless search.empty?
               begin
                 id = Integer(arg)
                 return print_error('A positive integer is required for the -i option') if id < 1
@@ -493,8 +510,9 @@ class Plugin::MsfVC < Msf::Plugin
           return
         end
 
-        return print_error("Either search or id option required.") if search.empty? && id == -1
+        return print_error("A search term or id is required.") if search.empty? && id == -1
 
+        # Retrieve the requested voice command
         if search.empty? && id != -1
           cmd = @vc_data.find_by_id(assistant, id)
         elsif !search.empty? && id == -1
@@ -518,6 +536,9 @@ class Plugin::MsfVC < Msf::Plugin
       end
     end
 
+    #
+    # The help prompt for the vc_details command.
+    #
     def usage_vc_details
       tbl = Rex::Text::Table.new(
         'Indent'        => 4,
