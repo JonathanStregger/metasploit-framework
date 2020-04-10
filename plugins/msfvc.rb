@@ -578,6 +578,9 @@ class Plugin::MsfVC < Msf::Plugin
       print_line("\n#{tbl.to_s}\nSee individual commands with -h or --help for details on those commands.\n")
     end
 
+    #
+    # Displays the requested script in readable form.
+    #
     def display_script(script)
       disp_script = get_script(script)
       unless disp_script
@@ -587,14 +590,22 @@ class Plugin::MsfVC < Msf::Plugin
       print_line("\n#{disp_script.to_s}")
     end
 
+    #
+    # Removes the requested voice command from the script by the index of the
+    # in the command in the script.
+    #
     def remove_from_script(script, index)
       raise ArgumentError.new("#{script} script not found. Cannot remove command from script.") if (rm_script = get_script(script)).nil?
 
       rm_script.rm(index)
     end
 
+    #
+    # Adds the requested voice command to the end of the script command queue.
+    #
     def add_to_script(script, assistant, id, fill)
-      # Add script to scripts list
+      # Get the script from the script list or create a new one if no script by
+      # that label exists yet.
       add_script = get_script(script) || VCScript.new(script, assistant, @vc_data.get_activator(assistant))
       cmd = @vc_data.find_by_id(assistant, id)
       begin
@@ -606,12 +617,18 @@ class Plugin::MsfVC < Msf::Plugin
       @scripts << add_script unless get_script(script)
     end
 
+    #
+    # Modifies the voice command at the indicated index in the script.
+    #
     def mod_script(script, index, fill)
       return print_error("Could not find #{script} script.") if (modify_script = get_script(script)).nil?
 
       modify_script.mod(index, fill)
     end
     
+    #
+    # Gets the script with the given lable from the script list.
+    #
     def get_script(script)
       @scripts.each do |find|
         if find.name == script
@@ -621,25 +638,29 @@ class Plugin::MsfVC < Msf::Plugin
       nil
     end
 
+    #
+    # Write the indicated script to file in json format.
+    #
     def write_script(script, filename = '')
       write = get_script(script)
-      unless write
-        print_error("Could not find #{script} script. Script not written to file.")
-      else
-        begin
-          script_path = write.save(filename)
-          print_status("#{script} script written to '#{script_path}'.")
-          print_error("WARNING: #{script} script contains commands that are not speech safe.") unless write.speech_safe?
-        rescue IOError => e
-          print_error("#{script} script not written to '#{script_path}'. #{e}")
-        rescue SystemCallError => e
-          print_error("#{script} script not written to '#{script_path}'. #{e}")
-        rescue ArgumentError => e
-          print_error(e)
-        end
+      return print_error("Could not find #{script} script. Script not written to file.") unless write
+      begin
+        script_path = write.save(filename)
+        print_status("#{script} script written to '#{script_path}'.")
+        print_error("WARNING: #{script} script contains commands that are not speech safe.") unless write.speech_safe?
+      rescue IOError => e
+        print_error("#{script} script not written to '#{script_path}'. #{e}")
+      rescue SystemCallError => e
+        print_error("#{script} script not written to '#{script_path}'. #{e}")
+      rescue ArgumentError => e
+        print_error(e)
       end
     end
 
+    #
+    # Loads a script into the script list from the msfvc data folder with the
+    # given filename.
+    #
     def load_from_file(filename)
       load_script = VCScript.new('')
       begin
@@ -657,6 +678,9 @@ class Plugin::MsfVC < Msf::Plugin
       end
     end
 
+    #
+    # Sanitize the script so it can be converted with to speech.
+    #
     def sanitize_script(script)
       dirty_script = get_script(script)
       return print_error("Could not find #{script} script. Script not sanitized") unless dirty_script
@@ -665,6 +689,9 @@ class Plugin::MsfVC < Msf::Plugin
       print_status("All commands in #{script} script have been sanitized.")
     end
 
+    #
+    # Set the silence gap between commands in the given script.
+    #
     def set_silence(script, spacing)
       space_script = get_script(script)
       return print_error("Could not find #{script} script. Script not sanitized") unless space_script
