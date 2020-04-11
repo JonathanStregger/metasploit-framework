@@ -1079,13 +1079,68 @@ class VCScript
   end
 end
 
+###
+#
+# Handles voice command data from a json format file.
+#   Loads data from voice-commands.json by default, but will load custom voice
+#   command data files of the correct format.
+#
+#   WARNING: incorrectly formatted json data will load without warning, but
+#   will fail on access.
+#
+#   Voice command data json format:
+#   {
+#     <Voice assistant name>: {
+#       "Activator": <activator text>,
+#       "Commands": {
+#         "1": {
+#           "Command": <command text>
+#           "Category": <category lable>
+#           "Fill notes": <notes about fillable wildcards>
+#           "Purpose": <notes on purpose if not obvious>
+#           "Vulnerability": <any vulnerability associate with the command>
+#         },
+#         "2": {
+#           ...
+#         }
+#       }
+#     },
+#     <Next voice assistant name>: {
+#       ...
+#     }
+#   }
+#
+#   Command text:
+#     Voice command text may include wildcards which are filled with different
+#     data by type. The wildards, as follows, are for reference of intended
+#     purpse. Mismatching types may be useful for finding vulnerabilities/bugs
+#     in voice assistants.
+#
+#   Command text wildcards:
+#     * - any text
+#     # - number
+#     @ - contact/name
+#     & - location
+#     : - date/time
+#
+###
 class VCData
+  #
+  # Initialize a new voice command data object. Loads data from either the
+  # default voice-commands.json file or a provided json file.
+  #
   def initialize(filename = 'voice-commands.json')
     vc_json_path = File.join(Msf::Config.data_directory, 'wordlists', filename)
     @vc_data = JSON.parse(File.read(vc_json_path))
   end
   
+  #
+  # Formats data from a voice assistant in a human readable table. Filters the
+  # data by category and search terms if provided.
+  # Displays the command index, command text, and associated category.
+  #
   def to_s(assistant, category = [], search = [])
+    # Get the commands matching the search terms
     cmds = find_by_str(assistant, search)
     
     tbl = Rex::Text::Table.new(
@@ -1098,6 +1153,8 @@ class VCData
         'Category'
       ]
     )
+    # If a search was done, fill the table with the search results filtered by
+    # category if category restrictions were given.
     unless cmds.nil?
       cmds.each do |cmd|
         if category.empty? || category.include?(cmd[1]['Category'])
@@ -1106,6 +1163,7 @@ class VCData
                   cmd[1]['Category']]
         end
       end
+    # Filter all commands from the specified assistant by all categories given
     else
       @vc_data[assistant]['Commands'].each do |cmd|
         if category.empty? || category.include?(cmd[1]['Category'])
@@ -1118,7 +1176,13 @@ class VCData
     tbl.to_s
   end
 
+  #
+  # Formats data from a voice assistant in a human readable table. Filters the
+  # data by category and search terms if provided.
+  # Displays all data stored related to the filtered voice commands.
+  #
   def to_s_verbose(assistant, category = [], search = [])
+    # Get the commands matching the search terms
     cmds = find_by_str(assistant, search)
 
     tbl = Rex::Text::Table.new(
@@ -1134,6 +1198,8 @@ class VCData
       'Vulnerability'
       ]
     )
+    # If a search was done, fill the table with the search results filtered by
+    # category if category restrictions were given.
     unless cmds.nil?
       cmds.each do |cmd|
         if category.empty? || category.include?(cmd[1]['Category'])
@@ -1145,6 +1211,7 @@ class VCData
                   cmd[1]['Vulnerability'] || 'none']
         end
       end
+    # Filter all commands from the specified assistant by all categories given
     else
       @vc_data[assistant]['Commands'].each do |cmd|
         if category.empty? || category.include?(cmd[1]['Category'])
@@ -1160,6 +1227,9 @@ class VCData
     tbl.to_s
   end
   
+  #
+  # Format all data for a specified voice command in a readable format.
+  #
   def to_s_details(assistant, cmd)
     msg = "#{assistant} Voice Command\n"
     (msg.length - 1).times do
@@ -1172,6 +1242,9 @@ class VCData
     msg << "    Vulnerability:\n#{details_line(cmd[1]['Vulnerability'])}\n\n"
   end
   
+  #
+  # Get a voice command by its voice assistant and index.
+  #
   def find_by_id(assistant, id)
     raise ArgumentError.new('Cannot find by id. Assistant must be specified to search by id.') if assistant.empty?
     
@@ -1179,6 +1252,9 @@ class VCData
     nil
   end
   
+  #
+  # Get all voice commands from a voice assistant that match the search terms.
+  #
   def find_by_str(assistant, terms = [])
     return nil if terms.empty?
 
@@ -1202,6 +1278,10 @@ class VCData
     nil
   end
   
+  #
+  # Get the voice assistant text as it is stored in the VCData object. Will
+  # get all available voice assistants if '?' is given.
+  #
   def get_assistant(assistant)
     if assistant == '?'
       supported = "\nSupported voice assistants\n==========================\n"
@@ -1216,17 +1296,26 @@ class VCData
     raise ArgumentError.new("#{assistant} is not a supported voice assistant.")
   end
 
+  #
+  # Gets the activator phrase for a voice assistant.
+  #
   def get_activator(assistant)
     @vc_data.keys.each { |va| return @vc_data[va]['Activator'] if va.downcase.include?(assistant.downcase) }
     nil
   end
 
   private
+  #
+  # Check if the object is nil before searching it.
+  #
   def check_search(obj, search)
     return false if obj.nil?
     obj.include?(search)
   end
   
+  #
+  # Formats a string with proper indentation and provide 'none' for no string.
+  #
   def details_line(str)
     return '     none' if str.nil?
     '     ' << str.capitalize
