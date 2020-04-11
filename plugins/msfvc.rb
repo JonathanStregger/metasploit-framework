@@ -830,6 +830,9 @@ end
 #
 ###
 class VCScript
+  #
+  # Initialize a new VCScript.
+  #
   def initialize(script, assistant = '', activator = '', silence = 0)
     @name = script
     @vc_list = []
