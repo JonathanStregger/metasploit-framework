@@ -64,15 +64,16 @@ class Plugin::MsfVC < Msf::Plugin
         'vc_script'     => 'Create or add to a voice command script.',
         'vc_tts'        => 'Text-to-speech for a script.',
         'vc_help'       => 'Display msfvc help',
-        'va_activators' => 'Get activators as speech.'
+        'vc_activators' => 'Get activators as speech.'
       }
     end
 
     #
-    # The voice command activators command.
+    # The voice assistant activators command.
     #   Gets activator phrases that have not yet been saved to file.
     #
     def cmd_vc_activators(*args)
+      return print_error('This command takes no options.') unless args.empty?
       tts_path = File.join(Msf::Config.data_directory, 'msfvc', 'activators')
       Dir.mkdir(tts_path) unless Dir.exists?(tts_path)
       # Get the audio from the text
