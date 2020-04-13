@@ -59,14 +59,37 @@ class Plugin::MsfVC < Msf::Plugin
     #
     def commands
       {
-        'vc_list'     => 'List available voice commands',
-        'vc_details'  => 'Display details for a voice command by id or command text',
-        'vc_script'   => 'Create or add to a voice command script.',
-        'vc_tts'      => 'Text-to-speech for a script.',
-        'vc_help'     => 'Display msfvc help'
+        'vc_list'       => 'List available voice commands',
+        'vc_details'    => 'Display details for a voice command by id or command text',
+        'vc_script'     => 'Create or add to a voice command script.',
+        'vc_tts'        => 'Text-to-speech for a script.',
+        'vc_help'       => 'Display msfvc help',
+        'va_activators' => 'Get activators as speech.'
       }
     end
 
+    #
+    # The voice command activators command.
+    #   Gets activator phrases that have not yet been saved to file.
+    #
+    def cmd_vc_activators(*args)
+      tts_path = File.join(Msf::Config.data_directory, 'msfvc', 'activators')
+      Dir.mkdir(tts_path) unless Dir.exists?(tts_path)
+      # Get the audio from the text
+      @vc_data.vc_data.each do |va|
+        assistant = va[0]
+        va_path = File.join(tts_path, "#{assistant}.mp3")
+        activator = va[1]['Activator']
+        unless File.exists?(va_path)
+          print_status('Contacting Google Translation Service')
+          activator.to_file('en', va_path)
+          print_status("#{assistant} activation phrase written as speech to #{va_path}")
+        else
+          print_error("#{assistant} activation phrase already exists as speech.")
+        end
+      end
+    end
+    
     #
     # The Text to Speech command.
     #
@@ -1137,6 +1160,7 @@ class VCData
     @vc_data = JSON.parse(File.read(vc_json_path))
   end
   
+  attr_reader :vc_data
   #
   # Formats data from a voice assistant in a human readable table. Filters the
   # data by category and search terms if provided.
